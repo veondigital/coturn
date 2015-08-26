@@ -185,21 +185,44 @@ static int mongo_get_auth_secrets(secrets_list_t *sl, u08bits *realm) {
   bson_destroy(&fields);
   return ret;
 }
-  
-static int mongo_get_user_key(u08bits *usname, u08bits *realm, hmackey_t key) {
-  mongoc_collection_t * collection = mongo_get_collection("turnusers_lt"); 
 
-	if(!collection)
+static void binary_2_string_key(hmackey_t key, char* skey, size_t sz)
+{
+    int maxsz = (int) (sz * 2) + 1;
+    char *s = skey;
+    for (size_t i = 0; (i < sz) && (maxsz > 2); i++) {
+        snprintf(s, (size_t) (sz * 2), "%02x", (unsigned int) key[i]);
+        maxsz -= 2;
+        s += 2;
+    }
+    skey[sz * 2] = 0;
+}
+
+static void password2hmac(u08bits *pwd, u08bits *user, u08bits *realm, char *skey)
+{
+    hmackey_t key;
+    stun_produce_integrity_key_str(user, realm, pwd, key, SHATYPE_DEFAULT);
+    size_t sz = get_hmackey_size(SHATYPE_DEFAULT);
+    binary_2_string_key(key, skey, sz);
+}
+
+static int mongo_get_user_key(u08bits *usname, u08bits * realm, hmackey_t key) {
+
+//    mongoc_collection_t * collection = mongo_get_collection("turnusers_lt");
+  mongoc_collection_t * collection = mongo_get_collection("users");
+
+  if(!collection)
     return -1;
     
   bson_t query;
   bson_init(&query);
-  BSON_APPEND_UTF8(&query, "name", (const char *)usname);
-  BSON_APPEND_UTF8(&query, "realm", (const char *)realm);
+
+  BSON_APPEND_UTF8(&query, "auth.email", (const char *)usname);
 
   bson_t fields;
   bson_init(&fields);
-  BSON_APPEND_INT32(&fields, "hmackey", 1);
+    
+  BSON_APPEND_INT32(&fields, "auth.secret", 1);
   
   mongoc_cursor_t * cursor;
   cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 1, 0, &query, &fields, NULL);
@@ -209,25 +232,38 @@ static int mongo_get_user_key(u08bits *usname, u08bits *realm, hmackey_t key) {
   if (!cursor) {
 		TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Error querying MongoDB collection 'turnusers_lt'\n");
   } else {
+      
+  {
+    // DEBUG
+      /*
+      const bson_t * doc = 0;
+      char *str = 0;
+      while (mongoc_cursor_next (cursor, &doc)) {
+          str = bson_as_json (doc, NULL);
+          fprintf (stdout, "%s\n", str);
+          bson_free (str);
+      }
+       */
+   }
+      
+      
     const bson_t * item;
     uint32_t length;
     bson_iter_t iter;
-    const char * value;
+    u08bits * value;
     if (mongoc_cursor_next(cursor, &item)) {
-    	if (bson_iter_init(&iter, item) && bson_iter_find(&iter, "hmackey") && BSON_ITER_HOLDS_UTF8(&iter)) {
-        value = bson_iter_utf8(&iter, &length);
+        bson_iter_t sub_iter;
+        if (bson_iter_init(&iter, item) && bson_iter_find_descendant(&iter, "auth.secret", &sub_iter) && && BSON_ITER_HOLDS_UTF8(&sub_iter)) {
+            value = (u08bits *) bson_iter_utf8(&sub_iter, &length);
 				size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
-				if(length < sz) {
-					TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key format: string length=%d (must be %d): user %s\n", (int)length, (int)sz, usname);
-				} else {
-					char kval[sizeof(hmackey_t) + sizeof(hmackey_t) + 1];
-					ns_bcopy(value, kval, sz);
-					kval[sz] = 0;
-					if(convert_string_key_to_binary(kval, key, sz / 2) < 0) {
-						TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", kval, usname);
-					} else {
-						ret = 0;
-					}
+
+                char skey[sizeof(hmackey_t) * 2 + 1];
+                password2hmac(value, usname, realm, skey);
+                    
+                if(convert_string_key_to_binary(skey, key, sz / 2) < 0) {
+                    TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
+                } else {
+					ret = 0;
 				}
       }
     }
