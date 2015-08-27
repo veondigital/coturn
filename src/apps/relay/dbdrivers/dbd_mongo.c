@@ -190,7 +190,8 @@ static void binary_2_string_key(hmackey_t key, char* skey, size_t sz)
 {
     int maxsz = (int) (sz * 2) + 1;
     char *s = skey;
-    for (size_t i = 0; (i < sz) && (maxsz > 2); i++) {
+    size_t i = 0;
+    for (i = 0; (i < sz) && (maxsz > 2); i++) {
         snprintf(s, (size_t) (sz * 2), "%02x", (unsigned int) key[i]);
         maxsz -= 2;
         s += 2;
@@ -198,10 +199,11 @@ static void binary_2_string_key(hmackey_t key, char* skey, size_t sz)
     skey[sz * 2] = 0;
 }
 
-static void password2hmac(u08bits *pwd, u08bits *user, u08bits *realm, char *skey)
+static void password2hmac(const char* pwd, u08bits *user, u08bits *realm, char *skey)
 {
     hmackey_t key;
-    stun_produce_integrity_key_str(user, realm, pwd, key, SHATYPE_DEFAULT);
+    char* pwd2 = (char*)pwd; // TODO we dont need this fun in a future
+    stun_produce_integrity_key_str(user, realm, (u08bits*)pwd2, key, SHATYPE_DEFAULT);
     size_t sz = get_hmackey_size(SHATYPE_DEFAULT);
     binary_2_string_key(key, skey, sz);
 }
@@ -250,21 +252,22 @@ static int mongo_get_user_key(u08bits *usname, u08bits * realm, hmackey_t key) {
     const bson_t * item;
     uint32_t length;
     bson_iter_t iter;
-    u08bits * value;
+    const char* password;
     if (mongoc_cursor_next(cursor, &item)) {
         bson_iter_t sub_iter;
-        if (bson_iter_init(&iter, item) && bson_iter_find_descendant(&iter, "auth.secret", &sub_iter) && && BSON_ITER_HOLDS_UTF8(&sub_iter)) {
-            value = (u08bits *) bson_iter_utf8(&sub_iter, &length);
-				size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
+        if (bson_iter_init(&iter, item) && bson_iter_find_descendant(&iter, "auth.secret", &sub_iter) && BSON_ITER_HOLDS_UTF8(&sub_iter)) {
+            
+	  password = bson_iter_utf8(&sub_iter, &length);
+	  size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
 
-                char skey[sizeof(hmackey_t) * 2 + 1];
-                password2hmac(value, usname, realm, skey);
+          char skey[sizeof(hmackey_t) * 2 + 1];
+          password2hmac(password, usname, realm, skey);
                     
-                if(convert_string_key_to_binary(skey, key, sz / 2) < 0) {
-                    TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
-                } else {
-					ret = 0;
-				}
+          if(convert_string_key_to_binary(skey, key, sz / 2) < 0) {
+	    TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
+            } else {
+	    ret = 0;
+	  }
       }
     }
     mongoc_cursor_destroy(cursor);
