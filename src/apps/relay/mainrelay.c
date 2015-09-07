@@ -1287,7 +1287,19 @@ static int parse_arg_string(char *sarg, int *c, char **value)
 			do {
 				++sarg;
 			} while((*sarg==' ') || (*sarg=='=') || (*sarg=='\t'));
-			*value = sarg;
+
+            // Check environment variables ${TEST_STRING}
+            int len = strlen(sarg);
+            if(sarg[0]=='$' &&  sarg[1]=='{' && sarg[len-1]=='}')
+            {
+                char evar[1024];
+                memcpy(evar, sarg+2, len - 3);
+                evar[len -2] = 0;
+                char* eval = getenv(evar);
+                *value = eval;
+            }
+            else
+                *value = sarg;
 			break;
 		}
 		++sarg;
