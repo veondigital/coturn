@@ -1294,7 +1294,7 @@ static int parse_arg_string(char *sarg, int *c, char **value)
             {
                 char evar[1024];
                 memcpy(evar, sarg+2, len - 3);
-                evar[len -2] = 0;
+                evar[len - 3] = 0;
                 char* eval = getenv(evar);
                 *value = eval;
             }
