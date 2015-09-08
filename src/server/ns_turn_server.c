@@ -2292,6 +2292,7 @@ static int handle_turn_connection_bind(turn_turnserver *server,
 	if(ss->to_be_closed) {
 
 		*err_code = 400;
+        *reason = (const u08bits *)"Bad request: ss->to_be_closed";
 
 	} else if (is_allocation_valid(a)) {
 
@@ -2405,6 +2406,7 @@ int turnserver_accept_tcp_client_data_connection(turn_turnserver *server, tcp_co
 		int resp_constructed = 0;
 		if(!tc || (tc->state == TC_STATE_READY) || (tc->client_s)) {
 			err_code = 400;
+            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "%s: Error 400, bad tcp tc->state \n", __FUNCTION__);
 		} else {
 			allocation *a = (allocation*)(tc->owner);
 			if(!a || !(a->owner)) {
@@ -3306,6 +3308,7 @@ static int check_stun_auth(turn_turnserver *server,
 
 		if(!sar) {
 			*err_code = 400;
+            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "%s: Error 400, REALM ATTR \n", __FUNCTION__);
 			return -1;
 		}
 
@@ -3337,6 +3340,7 @@ static int check_stun_auth(turn_turnserver *server,
 
 	if(!sar) {
 		*err_code = 400;
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "%s: Error 400, USERNAME ATTR \n", __FUNCTION__);
 		return -1;
 	}
 
@@ -3378,6 +3382,7 @@ static int check_stun_auth(turn_turnserver *server,
 
 		if(!sar) {
 			*err_code = 400;
+            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "%s: Error 400, NONCE ATTR \n", __FUNCTION__);
 			return -1;
 		}
 
@@ -3849,8 +3854,10 @@ static int handle_turn_command(turn_turnserver *server, ts_ur_super_session *ss,
 		if (!(*resp_constructed)) {
 
 			if (!err_code)
+            {
 				err_code = 400;
-
+                TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "%s: Error 400, resp_constructed \n", __FUNCTION__);
+            }
 			size_t len = ioa_network_buffer_get_size(nbh);
 			stun_init_error_response_str(method, ioa_network_buffer_data(nbh), &len, err_code, reason, &tid);
 			ioa_network_buffer_set_size(nbh,len);
@@ -3982,7 +3989,10 @@ static int handle_old_stun_command(turn_turnserver *server, ts_ur_super_session 
 		if (!(*resp_constructed)) {
 
 			if (!err_code)
+            {
 				err_code = 400;
+                TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "%s: Error 400, resp_constructed err \n", __FUNCTION__);
+            }
 
 			size_t len = ioa_network_buffer_get_size(nbh);
 			old_stun_init_error_response_str(method, ioa_network_buffer_data(nbh), &len, err_code, reason, &tid, cookie);
