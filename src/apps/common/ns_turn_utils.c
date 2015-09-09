@@ -435,6 +435,7 @@ static void set_rtpfile(void)
 
 void set_log_to_syslog(int val)
 {
+    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO, "Log to syslog %d\n", val);
 	to_syslog = val;
 }
 
