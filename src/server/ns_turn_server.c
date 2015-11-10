@@ -3420,7 +3420,7 @@ static int check_stun_auth(turn_turnserver *server,
 		*err_code = 401;
 		return create_challenge_response(ss,tid,resp_constructed,err_code,reason,nbh,method);
 	}
-
+    
 	/* Check integrity */
 	if(stun_check_message_integrity_by_key_str(server->ct,ioa_network_buffer_data(in_buffer->nbh),
 					  ioa_network_buffer_get_size(in_buffer->nbh),

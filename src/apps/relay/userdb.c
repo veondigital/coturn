@@ -400,8 +400,27 @@ static char *get_real_username(char *usname)
  */
 int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *usname, u08bits *realm, hmackey_t key, ioa_network_buffer_handle nbh)
 {
-	int ret = -1;
 
+    /* Decode certificate */
+    struct certificate cert;
+    unsigned char const *secret_key = (unsigned char *)turn_params.secret_key;
+    if(0==stun_check_message_certificate(ioa_network_buffer_data(nbh), ioa_network_buffer_get_size(nbh), &cert, secret_key))
+     {
+         const char* password = cert.call_id;
+         size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
+         
+         char skey[sizeof(hmackey_t) * 2 + 1];
+         password2hmac(password, usname, realm, skey);
+         
+         if(convert_string_key_to_binary(skey, key, sz / 2) < 0) {
+             TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
+         }
+
+         return 0;
+     }
+    
+    int ret = -1;
+    
 	if(max_session_time)
 		*max_session_time = 0;
 

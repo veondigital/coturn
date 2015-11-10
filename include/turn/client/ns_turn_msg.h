@@ -195,7 +195,7 @@ int Base64Decode(const u08bits* b64message, unsigned char * output, int* output_
 int parse_token(const char* server_token, struct certificate* cert);
 int decrypt_aes_128(unsigned char *ciphertext, int ciphertext_len, const unsigned char *key,
                             unsigned char *iv, unsigned char *plaintext);
-int stun_check_message_certificate(u08bits *buf, size_t len, struct certificate* cert, unsigned char const *key);
+int stun_check_message_certificate(u08bits *buf, size_t len, struct certificate* cert);
 int stun_check_message_integrity_by_key_str(turn_credential_type ct, u08bits *buf, size_t len, hmackey_t key, password_t pwd, SHATYPE shatype);
 int stun_check_message_integrity_str(turn_credential_type ct, u08bits *buf, size_t len, u08bits *uname, u08bits *realm, u08bits *upwd, SHATYPE shatype);
 int stun_attr_add_integrity_str(turn_credential_type ct, u08bits *buf, size_t *len, hmackey_t key, password_t pwd, SHATYPE shatype);

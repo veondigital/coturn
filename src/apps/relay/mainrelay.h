@@ -168,6 +168,8 @@ typedef enum _NET_ENG_VERSION NET_ENG_VERSION;
 
 typedef struct _turn_params_ {
 
+  char secret_key[128];
+    
 //////////////// OpenSSL group //////////////////////
 
   SSL_CTX *tls_ctx_ssl23;

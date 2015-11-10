@@ -199,10 +199,10 @@ static void binary_2_string_key(hmackey_t key, char* skey, size_t sz)
     skey[sz * 2] = 0;
 }
 
-static void password2hmac(const char* pwd, u08bits *user, u08bits *realm, char *skey)
+void password2hmac(const char* pwd, u08bits *user, u08bits *realm, char *skey)
 {
     hmackey_t key;
-    char* pwd2 = (char*)pwd; // TODO we dont need this fun in a future
+    char* pwd2 = (char*) (unsigned long) pwd; // TODO we dont need this fun in a future
     stun_produce_integrity_key_str(user, realm, (u08bits*)pwd2, key, SHATYPE_DEFAULT);
     size_t sz = get_hmackey_size(SHATYPE_DEFAULT);
     binary_2_string_key(key, skey, sz);

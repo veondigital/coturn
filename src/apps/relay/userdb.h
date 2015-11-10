@@ -214,6 +214,9 @@ redis_context_handle get_redis_async_connection(struct event_base *base, const c
 
 ////////////////////////////////////////////
 
+void password2hmac(const char* pwd, u08bits *user, u08bits *realm, char *skey);
+    
+    
 #ifdef __cplusplus
 }
 #endif
