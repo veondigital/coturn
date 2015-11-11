@@ -186,28 +186,6 @@ static int mongo_get_auth_secrets(secrets_list_t *sl, u08bits *realm) {
   return ret;
 }
 
-static void binary_2_string_key(hmackey_t key, char* skey, size_t sz)
-{
-    int maxsz = (int) (sz * 2) + 1;
-    char *s = skey;
-    size_t i = 0;
-    for (i = 0; (i < sz) && (maxsz > 2); i++) {
-        snprintf(s, (size_t) (sz * 2), "%02x", (unsigned int) key[i]);
-        maxsz -= 2;
-        s += 2;
-    }
-    skey[sz * 2] = 0;
-}
-
-void password2hmac(const char* pwd, u08bits *user, u08bits *realm, char *skey)
-{
-    hmackey_t key;
-    char* pwd2 = (char*) (unsigned long) pwd; // TODO we dont need this fun in a future
-    stun_produce_integrity_key_str(user, realm, (u08bits*)pwd2, key, SHATYPE_DEFAULT);
-    size_t sz = get_hmackey_size(SHATYPE_DEFAULT);
-    binary_2_string_key(key, skey, sz);
-}
-
 static int mongo_get_user_key(u08bits *usname, u08bits * realm, hmackey_t key) {
 
 //    mongoc_collection_t * collection = mongo_get_collection("turnusers_lt");
