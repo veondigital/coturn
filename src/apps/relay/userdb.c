@@ -439,8 +439,17 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
              TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
          }
 
+         // to do check time
+         char buff[20];
+         struct tm * timeinfo;
+         timeinfo = localtime (&cert.deadline);
+         strftime(buff, sizeof(buff), "%b %d %H:%M", timeinfo);
+         TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO, "Token decrypted: user:%s seq:%s time:%s call:%s \n", usname, cert.seq, buff, cert.call_id);
+         
          return 0;
      }
+    else
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Incorrect token: user %s\n", usname);
     
     int ret = -1;
     

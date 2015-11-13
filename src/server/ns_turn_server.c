@@ -3442,6 +3442,9 @@ static int check_stun_auth(turn_turnserver *server,
 		return create_challenge_response(ss,tid,resp_constructed,err_code,reason,nbh,method);
 	}
 
+    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,
+                  "user %s access granted\n", (char*)usname);
+    
 	*message_integrity = 1;
 
 	return 0;
