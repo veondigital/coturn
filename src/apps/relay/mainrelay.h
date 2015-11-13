@@ -168,7 +168,8 @@ typedef enum _NET_ENG_VERSION NET_ENG_VERSION;
 
 typedef struct _turn_params_ {
 
-  char secret_key[128];
+  unsigned char secret_key[EVP_MAX_KEY_LENGTH];
+  unsigned char secret_iv[EVP_MAX_IV_LENGTH];
     
 //////////////// OpenSSL group //////////////////////
 
@@ -360,6 +361,10 @@ void set_bps_capacity(band_limit_t value);
 band_limit_t get_max_bps(void);
 void set_max_bps(band_limit_t value);
 
+    
+    //// token certificate
+int passphrase2key(unsigned char const* pass, unsigned char* key, unsigned char* iv);
+    
 ///////////////////////////////
 
 #ifdef __cplusplus

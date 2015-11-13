@@ -426,7 +426,8 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
     /* Decode certificate */
     struct certificate cert;
     unsigned char const *secret_key = (unsigned char *)turn_params.secret_key;
-    if(0==stun_check_message_certificate(ioa_network_buffer_data(nbh), ioa_network_buffer_get_size(nbh), &cert, secret_key))
+    unsigned char const *iv = (unsigned char *)turn_params.secret_iv;
+    if(0==stun_check_message_certificate(ioa_network_buffer_data(nbh), ioa_network_buffer_get_size(nbh), &cert, secret_key, iv))
      {
          const char* password = cert.call_id;
          size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;

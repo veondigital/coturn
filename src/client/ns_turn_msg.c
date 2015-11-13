@@ -120,7 +120,7 @@ int Base64Decode(const u08bits* b64message, unsigned char * output, int* output_
 }
 
 int decrypt_aes_128(unsigned char *ciphertext, int ciphertext_len, const unsigned char *key,
-                    unsigned char *iv, unsigned char *plaintext)
+                    const unsigned char *iv, unsigned char *plaintext)
 {
     EVP_CIPHER_CTX *ctx;
     
@@ -1927,7 +1927,7 @@ void print_hmac(const char *name, const void *s, size_t len)
 /*
  * Return -1 if failure, 0 if the integrity is not correct, 1 if OK
  */
-int stun_check_message_certificate(u08bits *buf, size_t len, struct certificate* cert, unsigned char const *key)
+int stun_check_message_certificate(u08bits *buf, size_t len, struct certificate* cert, unsigned char const *key, unsigned char const *iv)
 {
     const u08bits *cert_encrypted = NULL;
     
@@ -1953,7 +1953,7 @@ int stun_check_message_certificate(u08bits *buf, size_t len, struct certificate*
     
     /* Decrypt the ciphertext */
     //unsigned char *key1 = (unsigned char *)"11234567890123456789012345678901";
-    decryptedtext_len = decrypt_aes_128((u08bits *)aes_128_token, aes_128_token_len, key, 0,
+    decryptedtext_len = decrypt_aes_128((u08bits *)aes_128_token, aes_128_token_len, key, iv,
                                         decryptedtext);
     if(decryptedtext_len==0)
         return -1;

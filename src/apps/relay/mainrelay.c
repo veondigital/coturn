@@ -64,7 +64,7 @@ static int anon_credentials = 0;
 #define DEFAULT_GENERAL_RELAY_SERVERS_NUMBER (1)
 
 turn_params_t turn_params = {
-    "",
+    "", "", // secret_key secret_iv
 NULL, NULL,
 #if TLSv1_1_SUPPORTED
 	NULL,
@@ -889,6 +889,30 @@ static int get_bool_value(const char* s)
 	exit(-1);
 }
 
+int passphrase2key(unsigned char const* pass, unsigned char* key, unsigned char* iv)
+{
+    const EVP_CIPHER *cipher;
+    const EVP_MD *dgst = NULL;
+
+    const unsigned char *salt = NULL;
+    
+    cipher = EVP_get_cipherbyname("aes-128-cbc");
+    if (!cipher)
+        { TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "no such cipher (aes-128-cbc) \n"); return 0; }
+    
+    dgst = EVP_get_digestbyname("md5");
+    if (!dgst)
+        { TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "no such digets (md5)\n"); return 0; }
+
+    
+    if (!EVP_BytesToKey(cipher, dgst, salt,
+                        (unsigned char *)(unsigned long)pass,
+                        strlen((const char*)pass), 1, key, iv))
+            { TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "bytes to token failed, cant convert passphrase, check config secret-key\n"); return 0; }
+    
+    return 1;
+}
+
 static void set_option(int c, char *value)
 {
   if(value && value[0]=='=') {
@@ -897,7 +921,7 @@ static void set_option(int c, char *value)
 
   switch (c) {
   case '0':
-      STRCPY(turn_params.secret_key, value);
+      passphrase2key( (unsigned char const*)value, turn_params.secret_key, turn_params.secret_iv);
       break;
   case SERVER_NAME_OPT:
 	  STRCPY(turn_params.oauth_server_name,value);
