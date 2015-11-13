@@ -427,29 +427,51 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
     struct certificate cert;
     unsigned char const *secret_key = (unsigned char *)turn_params.secret_key;
     unsigned char const *iv = (unsigned char *)turn_params.secret_iv;
-    if(0==stun_check_message_certificate(ioa_network_buffer_data(nbh), ioa_network_buffer_get_size(nbh), &cert, secret_key, iv))
-     {
-         const char* password = cert.call_id;
-         size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
-         
-         char skey[sizeof(hmackey_t) * 2 + 1];
-         password2hmac(password, usname, realm, skey);
-         
-         if(convert_string_key_to_binary(skey, key, sz / 2) < 0) {
-             TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
-         }
+    
+    const u08bits *token = NULL;
+    stun_attr_ref sar = stun_attr_get_first_by_type_str(ioa_network_buffer_data(nbh), ioa_network_buffer_get_size(nbh), STUN_ATTRIBUTE_SOFTWARE);
+    if (sar)
+    {
+        int token_len = stun_attr_get_len(sar);
+        token = stun_attr_get_value(sar);
+        
+        if(0==stun_check_message_certificate(token, token_len, &cert, secret_key, iv))
+         {
+             const char* password = cert.call_id;
+             size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
+             
+             char skey[sizeof(hmackey_t) * 2 + 1];
+             password2hmac(password, usname, realm, skey);
+             
+             if(convert_string_key_to_binary(skey, key, sz / 2) < 0) {
+                 TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
+             }
 
-         // to do check time
-         char buff[20];
-         struct tm * timeinfo;
-         timeinfo = localtime (&cert.deadline);
-         strftime(buff, sizeof(buff), "%b %d %H:%M", timeinfo);
-         TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO, "Token decrypted: user:%s seq:%s time:%s call:%s \n", usname, cert.seq, buff, cert.call_id);
-         
-         return 0;
-     }
+             char buff[20];
+             struct tm * timeinfo;
+             timeinfo = localtime (&cert.deadline);
+             strftime(buff, sizeof(buff), "%b %d %H:%M", timeinfo);
+             
+             time_t     now;
+             now = time(NULL);
+             
+             if(now - cert.deadline > 60 || now < cert.deadline)
+             {
+                 TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Token expired: user %s token: %s time:%s \n", usname, token, buff);
+                 return -1;
+             }
+
+             TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO, "Token decrypted: user:%s seq:%s time:%s call:%s \n", usname, cert.seq, buff, cert.call_id);
+             return 0;
+         }
+        else
+        {
+            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Incorrect token: user %s token: %s \n", usname, token);
+            return -1;
+        }
+    }
     else
-        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Incorrect token: user %s\n", usname);
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "Tokent not found: user %s\n", usname);
     
     int ret = -1;
     

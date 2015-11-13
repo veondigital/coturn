@@ -1927,21 +1927,9 @@ void print_hmac(const char *name, const void *s, size_t len)
 /*
  * Return -1 if failure, 0 if the integrity is not correct, 1 if OK
  */
-int stun_check_message_certificate(u08bits *buf, size_t len, struct certificate* cert, unsigned char const *key, unsigned char const *iv)
+int stun_check_message_certificate(const u08bits *cert_encrypted, size_t cert_encrypted_len, struct certificate* cert, unsigned char const *key, unsigned char const *iv)
 {
-    const u08bits *cert_encrypted = NULL;
-    
-    stun_attr_ref sar = stun_attr_get_first_by_type_str(buf, len, STUN_ATTRIBUTE_SOFTWARE);
-    if (!sar)
-        return -1;
-    
- 	int sarlen = stun_attr_get_len(sar);
-    cert_encrypted = stun_attr_get_value(sar);
-    
-    if(sarlen<1)
-        return -1;
-
-//    unsigned char const *key = (unsigned char *)"01234567890123456789012345678901";
+    UNUSED_ARG(cert_encrypted_len);
 
     unsigned char decryptedtext[128];
     unsigned char aes_128_token[128];
