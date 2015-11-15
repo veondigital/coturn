@@ -450,14 +450,15 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
              char buff[20];
              struct tm * timeinfo;
              timeinfo = localtime (&cert.deadline);
-             strftime(buff, sizeof(buff), "%b %d %H:%M", timeinfo);
+             strftime(buff, sizeof(buff), "%Y %b %d %H:%M", timeinfo);
              
              time_t     now;
              now = time(NULL);
              
-             if(now - cert.deadline > 60 || now < cert.deadline)
+             if(now < cert.deadline || // server's time's wrong?
+                now - cert.deadline > 60*60*24 ) // too much diff, something wrong
              {
-                 TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Token expired: user %s token: %s time:%s \n", usname, token, buff);
+                 TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Token expired: user: %s token: %s time: %s time_diff: %d sec\n", usname, token, buff, now - cert.deadline);
                  return -1;
              }
 
