@@ -891,6 +891,8 @@ static int get_bool_value(const char* s)
 
 int passphrase2key(unsigned char const* pass, unsigned char* key, unsigned char* iv)
 {
+    OpenSSL_add_ssl_algorithms(); // openssl_setup happens later, so we need it here
+    
     const EVP_CIPHER *cipher;
     const EVP_MD *dgst = NULL;
 
