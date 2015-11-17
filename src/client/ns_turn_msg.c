@@ -93,6 +93,7 @@ size_t calcDecodeLength(const unsigned char* b64input) { //Calculates the length
 
 int Base64Decode(const u08bits* b64message, unsigned char * output, int* output_length) { //Decodes a base64 encoded string
     
+    // to do check b64message can be null
     BIO *bio, *b64;
     unsigned char* buffer;
     int length;
@@ -1935,6 +1936,8 @@ int stun_check_message_certificate(const u08bits *cert_encrypted, size_t cert_en
     unsigned char aes_128_token[128];
     int decryptedtext_len = 0;
     int aes_128_token_len = 0;
+    
+    // to do check cert_encrypted can be null
     
     if(!Base64Decode(cert_encrypted, aes_128_token, &aes_128_token_len))
         return -1;

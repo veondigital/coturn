@@ -425,6 +425,7 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
 
     /* Decode certificate */
     struct certificate cert;
+    memset(&cert, 0, sizeof cert);
     unsigned char const *secret_key = (unsigned char *)turn_params.secret_key;
     unsigned char const *iv = (unsigned char *)turn_params.secret_iv;
     
@@ -434,8 +435,8 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
     {
         int token_len = stun_attr_get_len(sar);
         token = stun_attr_get_value(sar);
-        
-        if(0==stun_check_message_certificate(token, token_len, &cert, secret_key, iv))
+
+        if(token && 0==stun_check_message_certificate(token, token_len, &cert, secret_key, iv))
          {
              const char* password = cert.call_id;
              size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
