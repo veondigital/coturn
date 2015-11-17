@@ -456,7 +456,7 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
              time_t     now;
              now = time(NULL);
              
-             if(now < cert.deadline || // server's time's wrong?
+             if(now - cert.deadline < -60 || // server's time's wrong? more tann 60 sec time diff
                 now - cert.deadline > 60*60*24 ) // too much diff, something wrong
              {
                  TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Token expired: user: %s token: %s time: %s time_diff: %d sec\n", usname, token, buff, now - cert.deadline);
