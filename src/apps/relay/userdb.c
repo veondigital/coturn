@@ -429,14 +429,15 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
     unsigned char const *secret_key = (unsigned char *)turn_params.secret_key;
     unsigned char const *iv = (unsigned char *)turn_params.secret_iv;
     
-    const u08bits *token = NULL;
     stun_attr_ref sar = stun_attr_get_first_by_type_str(ioa_network_buffer_data(nbh), ioa_network_buffer_get_size(nbh), STUN_ATTRIBUTE_SOFTWARE);
     if (sar)
     {
         int token_len = stun_attr_get_len(sar);
-        token = stun_attr_get_value(sar);
+        const u08bits* token_ptr = stun_attr_get_value(sar);
+	u08bits token[128];
+	memcpy(token, token_ptr, token_len);
 
-        if(token && 0==stun_check_message_certificate(token, token_len, &cert, secret_key, iv))
+        if(token_len && 0==stun_check_message_certificate(token, token_len, &cert, secret_key, iv))
          {
              const char* password = cert.call_id;
              size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;

@@ -54,6 +54,7 @@ static void generate_random_nonce(unsigned char *nonce, size_t sz);
 
 int parse_token(const char* server_token, struct certificate* cert)
 {
+    memset(cert, 0, sizeof(struct certificate));
     int size = strlen(server_token);
     if(server_token[0]!='{')
         return 0;
