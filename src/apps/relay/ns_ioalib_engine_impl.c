@@ -32,6 +32,7 @@
 #include "ns_turn_session.h"
 #include "ns_turn_server.h"
 #include "ns_turn_khash.h"
+#include "ns_turn_statistics.h"
 
 #include "stun_buffer.h"
 #include "apputils.h"
@@ -3570,6 +3571,8 @@ void turn_report_allocation_set(void *a, turn_time_t lifetime, int refresh)
 			if(server) {
 				ioa_engine_handle e = turn_server_get_engine(server);
 				if(e && e->verbose && ss->client_socket) {
+                    if(!refresh)
+                        stat_new_client_connection();
 					if(ss->client_socket->ssl) {
 						TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"session %018llu: %s, realm=<%s>, username=<%s>, lifetime=%lu, cipher=%s, method=%s\n", (unsigned long long)ss->id, status, (char*)ss->realm_options.name, (char*)ss->username, (unsigned long)lifetime, SSL_get_cipher(ss->client_socket->ssl),
 							turn_get_ssl_method(ss->client_socket->ssl, "UNKNOWN"));
@@ -3601,6 +3604,7 @@ void turn_report_allocation_delete(void *a)
 		if(ss) {
 			turn_turnserver *server = (turn_turnserver*)ss->server;
 			if(server) {
+                stat_delete_client_connection();
 				ioa_engine_handle e = turn_server_get_engine(server);
 				if(e && e->verbose) {
 					TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"session %018llu: delete: realm=<%s>, username=<%s>\n", (unsigned long long)ss->id, (char*)ss->realm_options.name, (char*)ss->username);

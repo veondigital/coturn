@@ -29,6 +29,7 @@
  */
 
 #include "mainrelay.h"
+#include "ns_turn_statistics.h"
 
 ////// TEMPORARY data //////////
 
@@ -1820,6 +1821,7 @@ int main(int argc, char **argv)
 	set_execdir();
 
 	init_super_memory();
+    stat_clean();
 
 #if !defined(TURN_NO_HIREDIS)
 	redis_async_init();

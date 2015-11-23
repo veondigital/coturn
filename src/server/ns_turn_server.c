@@ -29,11 +29,12 @@
  */
 
 #include "ns_turn_server.h"
-
+#include "ns_turn_statistics.h"
 #include "ns_turn_utils.h"
 #include "ns_turn_allocation.h"
 #include "ns_turn_msg_addr.h"
 #include "ns_turn_ioalib.h"
+
 
 ///////////////////////////////////////////
 
@@ -842,6 +843,8 @@ static void client_ss_perm_timeout_handler(ioa_engine_handle e, void* arg) {
 
 static int update_turn_permission_lifetime(ts_ur_super_session *ss, turn_permission_info *tinfo, turn_time_t time_delta) {
 
+    stat_dump();
+    
 	if (ss && tinfo && tinfo->owner) {
 
 		turn_turnserver *server = (turn_turnserver *) (ss->server);
