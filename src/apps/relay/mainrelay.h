@@ -168,6 +168,8 @@ typedef enum _NET_ENG_VERSION NET_ENG_VERSION;
 
 typedef struct _turn_params_ {
 
+  unsigned char etcd_db[256];
+    
   unsigned char secret_key[EVP_MAX_KEY_LENGTH];
   unsigned char secret_iv[EVP_MAX_IV_LENGTH];
     

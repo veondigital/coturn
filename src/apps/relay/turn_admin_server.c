@@ -1215,7 +1215,6 @@ static void print_statistics(void)
             // https://steppechange.atlassian.net/wiki/x/DwAd
             // ./etcd-test  -s 127.0.0.1:2379 get turn_server
             unsigned long ttl_num = PULL_SERVER_INFO_INTERVAL*2; // sec
-
             
             char ip[256];
             char key[256];
@@ -1231,7 +1230,7 @@ static void print_statistics(void)
             
             int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
             if (code != ETCD_OK) {
-                fprintf(stderr,"Cant write configuration, etcd_set failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n", code); // to do log
+                TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cant write configuration, etcd_set failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n", code);
                 return;
             }
         }
@@ -1352,11 +1351,11 @@ void setup_admin_thread(void)
     
     
     
-    const char* etcd_server = "127.0.0.1:2379";
-    adminserver.etcd_sess = etcd_open_str(strdup(etcd_server));
+    unsigned char* etcd_server = turn_params.etcd_db;
+    adminserver.etcd_sess = etcd_open_str(strdup((const char*)etcd_server));
     
     if (!adminserver.etcd_sess) {
-        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cannot create open etcd connection %s", etcd_server);
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cannot open etcd connection url: %s", etcd_server);
         return;
     }
     
