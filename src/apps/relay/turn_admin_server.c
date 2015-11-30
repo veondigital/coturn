@@ -84,6 +84,8 @@ int cli_port = CLI_DEFAULT_PORT;
 
 char cli_password[CLI_PASSWORD_LENGTH] = "";
 
+const int PULL_SERVER_INFO_INTERVAL = 10; // seconds
+
 int cli_max_output_sessions = DEFAULT_CLI_MAX_OUTPUT_SESSIONS;
 
 ///////////////////////////////
@@ -1187,6 +1189,78 @@ static void cliserver_input_handler(struct evconnlistener *l, evutil_socket_t fd
 	}
 }
 
+static void print_statistics(void)
+{
+    struct cli_session fake_cs;
+    memset(&fake_cs, 0, sizeof(fake_cs));
+    struct ps_arg arg = { &fake_cs, 0, 0, "", "", 0, NULL, NULL, NULL, 0};
+
+    arg.ct = turn_time();
+    arg.users = ur_string_map_create(NULL);
+
+    ur_map_foreach_arg(adminserver.sessions, (foreachcb_arg_type)print_session, &arg);
+
+    char guid[256];
+    addr_to_string(turn_params.external_ip, (u08bits*)guid);
+    int active_users = 0;
+    
+    if(arg.user_counters)
+        active_users = *(arg.user_counters);
+    
+   // if(arg.user_counters)
+    {
+        if (adminserver.etcd_sess) {
+            // https://coreos.com/etcd/docs/0.4.7/etcd-api/
+            // https://coreos.com/etcd/docs/2.2.2/errorcode.html
+            // https://steppechange.atlassian.net/wiki/x/DwAd
+            // ./etcd-test  -s 127.0.0.1:2379 get turn_server
+            unsigned long ttl_num = PULL_SERVER_INFO_INTERVAL*2; // sec
+
+            
+            char ip[256];
+            char key[256];
+            char url[256];
+            char active_calls[256];
+            char json[1024];
+
+            addr_to_string(turn_params.external_ip, (u08bits*)ip);
+            snprintf(key, sizeof(key), "/config/turn/%s", ip);
+            snprintf(url, sizeof(url), "turn:%s:%d", ip, turn_params.listener_port);
+            snprintf(active_calls, sizeof(active_calls), "%d",  active_users);
+            snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":\"%s\" }", url, active_calls);
+            
+            int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
+            if (code != ETCD_OK) {
+                fprintf(stderr,"Cant write configuration, etcd_set failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n", code); // to do log
+                return;
+            }
+        }
+    }
+    
+    if(arg.user_counters)
+        turn_free(arg.user_counters,sizeof(size_t)*arg.users_number);
+    if(arg.user_names) {
+        size_t i;
+        for(i=0;i<arg.users_number;++i) {
+            if(arg.user_names[i])
+                turn_free(arg.user_names[i],strlen(arg.user_names[i])+1);
+        }
+        turn_free(arg.user_names,sizeof(char*) * arg.users_number);
+    }
+    if(arg.users)
+        ur_string_map_free(&arg.users);
+}
+
+static void pull_server_info_hadler(ioa_engine_handle e, void *arg)
+{
+    UNUSED_ARG(e);
+    char* test = (char*)arg;
+    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"%s %s\n", __FUNCTION__, test);
+    
+    print_statistics();
+
+}
+
 void setup_admin_thread(void)
 {
 	adminserver.event_base = turn_event_base_new();
@@ -1269,6 +1343,25 @@ void setup_admin_thread(void)
 	}
 
 	adminserver.sessions = ur_map_create();
+    
+
+    char* test = "test";
+    adminserver.pull_server_info_timer = set_ioa_timer(adminserver.e, PULL_SERVER_INFO_INTERVAL, 0,
+                                          pull_server_info_hadler, test, 1,
+                                          "pull_server_info_hadler");
+    
+    
+    
+    const char* etcd_server = "127.0.0.1:2379";
+    adminserver.etcd_sess = etcd_open_str(strdup(etcd_server));
+    
+    if (!adminserver.etcd_sess) {
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cannot create open etcd connection %s", etcd_server);
+        return;
+    }
+    
+    // to do IOA_EVENT_DEL(adminserver.pull_server_info_timer);
+    // to do etcd_close_str(adminserver.etcd_sess);
 }
 
 void admin_server_receive_message(struct bufferevent *bev, void *ptr)

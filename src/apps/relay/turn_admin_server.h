@@ -42,6 +42,7 @@
 #include "ns_turn_utils.h"
 #include "ns_turn_maps.h"
 #include "ns_turn_server.h"
+#include "etcd-api.h"
 
 #include "apputils.h"
 
@@ -73,6 +74,8 @@ struct admin_server {
 	struct bufferevent *https_out_buf;
 	ur_map *sessions;
 	pthread_t thr;
+    ioa_timer_handle pull_server_info_timer;
+    etcd_session etcd_sess;
 };
 
 ///////////////////////////////////////////
