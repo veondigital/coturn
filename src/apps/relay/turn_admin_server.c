@@ -1219,14 +1219,12 @@ static void print_statistics(void)
             char ip[256];
             char key[256];
             char url[256];
-            char active_calls[256];
             char json[1024];
 
             addr_to_string(turn_params.external_ip, (u08bits*)ip);
-            snprintf(key, sizeof(key), "/config/turn/%s", ip);
+            snprintf(key, sizeof(key), "/config/turn/running/%s", ip);
             snprintf(url, sizeof(url), "turn:%s:%d", ip, turn_params.listener_port);
-            snprintf(active_calls, sizeof(active_calls), "%d",  active_users);
-            snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":\"%s\" }", url, active_calls);
+            snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d }", url, active_users);
             
             int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
             if (code != ETCD_OK) {
@@ -1253,8 +1251,9 @@ static void print_statistics(void)
 static void pull_server_info_hadler(ioa_engine_handle e, void *arg)
 {
     UNUSED_ARG(e);
-    char* test = (char*)arg;
-    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"%s %s\n", __FUNCTION__, test);
+    UNUSED_ARG(arg);
+//    char* test = (char*)arg;
+//    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"%s %s\n", __FUNCTION__, test);
     
     print_statistics();
 
@@ -1358,6 +1357,8 @@ void setup_admin_thread(void)
         TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cannot open etcd connection url: %s", etcd_server);
         return;
     }
+    else
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"etcd connection opened, url: %s", etcd_server);
     
     // to do IOA_EVENT_DEL(adminserver.pull_server_info_timer);
     // to do etcd_close_str(adminserver.etcd_sess);
