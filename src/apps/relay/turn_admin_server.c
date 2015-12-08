@@ -84,7 +84,7 @@ int cli_port = CLI_DEFAULT_PORT;
 
 char cli_password[CLI_PASSWORD_LENGTH] = "";
 
-const int PULL_SERVER_INFO_INTERVAL = 10; // seconds
+const int PULL_SERVER_INFO_INTERVAL = 60; // seconds
 
 int cli_max_output_sessions = DEFAULT_CLI_MAX_OUTPUT_SESSIONS;
 
