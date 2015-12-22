@@ -434,10 +434,11 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
     {
         int token_len = stun_attr_get_len(sar);
         const u08bits* token_ptr = stun_attr_get_value(sar);
-	u08bits token[128];
-	memcpy(token, token_ptr, token_len);
-
-        if(token_len && 0==stun_check_message_certificate(token, token_len, &cert, secret_key, iv))
+        u08bits token[128];
+        memcpy(token, token_ptr, token_len);
+        token[token_len]=0;
+        int err = stun_check_message_certificate(token, token_len, &cert, secret_key, iv);
+        if(token_len && err == 0)
          {
              const char* password = cert.call_id;
              size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
@@ -469,7 +470,7 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
          }
         else
         {
-            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Incorrect token: user %s token: %s \n", usname, token);
+            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Incorrect token: user %s token: %s Error: %d\n", usname, token, err);
             return -1;
         }
     }

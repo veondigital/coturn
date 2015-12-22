@@ -109,6 +109,7 @@ int Base64Decode(const u08bits* b64message, unsigned char * output, int* output_
     bio = BIO_push(b64, bio);
     
     BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
+   // char* test = (char*)(unsigned long)b64message;
     length = BIO_read(bio, buffer, strlen((char*)(unsigned long)b64message));
     if(length != decodeLen) //length should equal decodeLen, else something went horribly wrong
         return 0;
@@ -1948,13 +1949,13 @@ int stun_check_message_certificate(const u08bits *cert_encrypted, size_t cert_en
     decryptedtext_len = decrypt_aes_128((u08bits *)aes_128_token, aes_128_token_len, key, iv,
                                         decryptedtext);
     if(decryptedtext_len==0)
-        return -1;
+        return -2;
     
     /* Add a NULL terminator. We are expecting printable text */
     decryptedtext[decryptedtext_len] = 0;
     
     if(!parse_token((const char *)decryptedtext, cert))
-        return -1;
+        return -3;
     
     return 0;
 }
