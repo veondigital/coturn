@@ -1341,6 +1341,10 @@ static int parse_arg_string(char *sarg, int *c, char **value)
                                   "Wrong config option, environment variable %s not found\n", evar);
                     exit(0);
                 }
+                else
+                    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,
+                                  "Found environment variable %s %s\n", evar, strcmp(evar,"SECRET_KEY")==0 ? "xxx" : eval);
+                
                 *value = eval;
             }
             else
