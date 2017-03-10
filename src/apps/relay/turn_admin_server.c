@@ -1214,6 +1214,7 @@ static void print_statistics(void)
             // https://coreos.com/etcd/docs/2.2.2/errorcode.html
             // https://steppechange.atlassian.net/wiki/x/DwAd
             // ./etcd-test  -s 127.0.0.1:2379 get turn_server
+            // curl -L 'http://192.168.1.80:2379/v2/keys/config/turn?recursive=true'
             unsigned long ttl_num = PULL_SERVER_INFO_INTERVAL*2; // sec
             
             char ip[256];
@@ -1224,13 +1225,15 @@ static void print_statistics(void)
             addr_to_string(turn_params.external_ip, (u08bits*)ip);
             snprintf(key, sizeof(key), "/config/turn/running/%s", ip);
             snprintf(url, sizeof(url), "turn:%s:%d", ip, turn_params.listener_port);
-            snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d }", url, active_users);
+            snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d, \"country_code\":%s }", url, active_users, turn_params.country_code);
             
             int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
             if (code != ETCD_OK) {
                 TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cant write configuration, etcd_set failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n", code);
                 return;
             }
+            // TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"turn etcd data updated\n");
+
         }
     }
     
@@ -1350,15 +1353,19 @@ void setup_admin_thread(void)
     
     
     
+    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"ETCD connection setup ..... %s\n", turn_params.etcd_db);
     unsigned char* etcd_server = turn_params.etcd_db;
+
     adminserver.etcd_sess = etcd_open_str(strdup((const char*)etcd_server));
-    
+
     if (!adminserver.etcd_sess) {
-        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cannot open etcd connection url: %s", etcd_server);
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cannot open etcd connection url: %s\n", etcd_server);
         return;
     }
     else
-        TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"etcd connection opened, url: %s", etcd_server);
+    {
+        TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"etcd connection opened, url: %s\n", etcd_server);
+    }
     
     // to do IOA_EVENT_DEL(adminserver.pull_server_info_timer);
     // to do etcd_close_str(adminserver.etcd_sess);

@@ -173,6 +173,8 @@ typedef struct _turn_params_ {
   unsigned char secret_key[EVP_MAX_KEY_LENGTH];
   unsigned char secret_iv[EVP_MAX_IV_LENGTH];
     
+  unsigned char country_code[32];
+    
 //////////////// OpenSSL group //////////////////////
 
   SSL_CTX *tls_ctx_ssl23;
