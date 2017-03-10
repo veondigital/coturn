@@ -1335,6 +1335,12 @@ static int parse_arg_string(char *sarg, int *c, char **value)
                 memcpy(evar, sarg+2, len - 3);
                 evar[len - 3] = 0;
                 char* eval = getenv(evar);
+                if(eval==NULL)
+                {
+                    TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,
+                                  "Wrong config option, environment variable %s not found\n", evar);
+                    exit(0);
+                }
                 *value = eval;
             }
             else
