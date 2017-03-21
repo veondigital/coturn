@@ -101,12 +101,12 @@ typedef struct s_mclient {
 #define is_TCP_relay() (relay_transport == STUN_ATTRIBUTE_TRANSPORT_TCP_VALUE)
 void mclient_init(mclient *this);
         
-int start_mclient(s_mclient *this, const char *remote_address, int port,
+int start_mclient(mclient *this, const char *remote_address, int port,
 		   const unsigned char* ifname, const char *local_address,
 		   int messagenumber, int mclient);
 
-int send_buffer(app_ur_conn_info *clnet_info, stun_buffer* message, int data_connection, app_tcp_conn_info *atc);
-int recv_buffer(app_ur_conn_info *clnet_info, stun_buffer* message, int sync, int data_connection, app_tcp_conn_info *atc, stun_buffer* request_message);
+int send_buffer(mclient *this, app_ur_conn_info *clnet_info, stun_buffer* message, int data_connection, app_tcp_conn_info *atc);
+int recv_buffer(mclient *this, app_ur_conn_info *clnet_info, stun_buffer* message, int sync, int data_connection, app_tcp_conn_info *atc, stun_buffer* request_message);
 
 void client_input_handler(evutil_socket_t fd, short what, void* arg);
 

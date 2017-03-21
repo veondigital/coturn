@@ -56,8 +56,8 @@ static u64bits tot_send_dropped = 0;
 
 struct event_base* client_event_base=NULL;
 
-static int client_write(app_ur_session *elem);
-static int client_shutdown(app_ur_session *elem);
+static int client_write(mclient *this, app_ur_session *elem);
+static int client_shutdown(mclient *this, app_ur_session *elem);
 
 static u64bits current_time = 0;
 static u64bits current_mstime = 0;
@@ -97,13 +97,13 @@ void mclient_init(mclient *this)
 {
     memset(this, sizeof(this), 0);
     
-    clmessage_length=100;
-    clnet_verbose = TURN_VERBOSE_NONE;
-    default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_DEFAULT;
-    use_fingerprints = 1;
+    this->clmessage_length=100;
+    this->clnet_verbose = TURN_VERBOSE_NONE;
+    this->default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_DEFAULT;
+    this->use_fingerprints = 1;
     
-    relay_transport = STUN_ATTRIBUTE_TRANSPORT_UDP_VALUE;
-    shatype = SHATYPE_DEFAULT;
+    this->relay_transport = STUN_ATTRIBUTE_TRANSPORT_UDP_VALUE;
+    this->shatype = SHATYPE_DEFAULT;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ static int remove_all_from_ss(app_ur_session* ss)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int send_buffer(app_ur_conn_info *clnet_info, stun_buffer* message, int data_connection, app_tcp_conn_info *atc)
+int send_buffer(mclient *this, app_ur_conn_info *clnet_info, stun_buffer* message, int data_connection, app_tcp_conn_info *atc)
 {
 
 	int rc = 0;
@@ -212,7 +212,7 @@ int send_buffer(app_ur_conn_info *clnet_info, stun_buffer* message, int data_con
 
 	char *buffer = (char*) (message->buf);
 
-	if(negative_protocol_test && (message->len>0)) {
+	if(this->negative_protocol_test && (message->len>0)) {
 		if(random()%10 == 0) {
 			int np = (int)((unsigned long)random()%10);
 			while(np-->0) {
@@ -370,7 +370,7 @@ static int wait_fd(int fd, unsigned int cycle) {
 	}
 }
 
-int recv_buffer(app_ur_conn_info *clnet_info, stun_buffer* message, int sync, int data_connection, app_tcp_conn_info *atc, stun_buffer* request_message) {
+int recv_buffer(mclient *this, app_ur_conn_info *clnet_info, stun_buffer* message, int sync, int data_connection, app_tcp_conn_info *atc, stun_buffer* request_message) {
 
 	int rc = 0;
 
@@ -402,7 +402,7 @@ int recv_buffer(app_ur_conn_info *clnet_info, stun_buffer* message, int sync, in
 			if(serc<0) {
 				return -1;
 			}
-			if(send_buffer(clnet_info, request_message, data_connection, atc)<=0)
+			if(send_buffer(this, clnet_info, request_message, data_connection, atc)<=0)
 				return -1;
 			++cycle;
 		}
@@ -1226,7 +1226,7 @@ static int start_c2c(const char *remote_address, int port,
   return 0;
 }
 
-static int refresh_channel(app_ur_session* elem, u16bits method, uint32_t lt)
+static int refresh_channel(mclient *this, app_ur_session* elem, u16bits method, uint32_t lt)
 {
 
 	stun_buffer message;
@@ -1256,7 +1256,7 @@ static int refresh_channel(app_ur_session* elem, u16bits method, uint32_t lt)
 		if(add_integrity(clnet_info, &message)<0) return -1;
 		if(use_fingerprints)
 			    stun_attr_add_fingerprint_str(message.buf, (size_t*) &(message.len));
-		send_buffer(clnet_info, &message, 0,0);
+		send_buffer(this, clnet_info, &message, 0,0);
 	}
 
 	if (lt && !addr_any(&(elem->pinfo.peer_addr))) {
@@ -1269,7 +1269,7 @@ static int refresh_channel(app_ur_session* elem, u16bits method, uint32_t lt)
 				if(add_integrity(clnet_info, &message)<0) return -1;
 				if(use_fingerprints)
 				    stun_attr_add_fingerprint_str(message.buf, (size_t*) &(message.len));
-				send_buffer(&(elem->pinfo), &message, 0,0);
+				send_buffer(this, &(elem->pinfo), &message, 0,0);
 			}
 		}
 
@@ -1280,7 +1280,7 @@ static int refresh_channel(app_ur_session* elem, u16bits method, uint32_t lt)
 				if(add_integrity(clnet_info, &message)<0) return -1;
 				if(use_fingerprints)
 					    stun_attr_add_fingerprint_str(message.buf, (size_t*) &(message.len));
-				send_buffer(&(elem->pinfo), &message,1,0);
+				send_buffer(this, &(elem->pinfo), &message,1,0);
 			}
 		}
 	}
