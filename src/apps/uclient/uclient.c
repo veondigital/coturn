@@ -97,7 +97,7 @@ void mclient_init(mclient *this)
 {
     memset(this, sizeof(this), 0);
     
-    this->clmessage_length=100;
+    this->clmessage_length = 100;
     this->clnet_verbose = TURN_VERBOSE_NONE;
     this->default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_DEFAULT;
     this->use_fingerprints = 1;
@@ -997,7 +997,7 @@ static void run_events(int short_burst)
 
 ////////////////////// main method /////////////////
 
-static int start_client(const char *remote_address, int port,
+static int start_client(mclient *this, const char *remote_address, int port,
 			const unsigned char* ifname, const char *local_address, 
 			int messagenumber, 
 			int i) {
@@ -1085,7 +1085,7 @@ static int start_client(const char *remote_address, int port,
   return 0;
 }
 
-static int start_c2c(const char *remote_address, int port,
+static int start_c2c(mclient *this, const char *remote_address, int port,
 			    const unsigned char* ifname, const char *local_address, 
 			    int messagenumber, 
 			    int i) {
@@ -1123,7 +1123,7 @@ static int start_c2c(const char *remote_address, int port,
   uint16_t chnum2=0;
   uint16_t chnum2_rtcp=0;
 
-  start_c2c_connection(port, remote_address, 
+  start_c2c_connection(this, port, remote_address,
 		       ifname, local_address, 
 		       clnet_verbose,
 		       &clnet_info_probe,
@@ -1411,8 +1411,9 @@ int start_mclient(mclient *this, const char *remote_address, int port,
 	  if(!no_rtcp)
 	    for (i = 0; i < (mclient >> 2); i++) {
 	      if(!dos) usleep(SLEEP_INTERVAL);
-	      if (start_c2c(remote_address, port, ifname, local_address,
+	      if (start_c2c(this, remote_address, port, ifname, local_address,
 			    messagenumber, i << 2) < 0) {
+              //todo: free client_event_base
 	    	  return -1;
 	      }
 	      tot_clients+=4;
@@ -1420,8 +1421,9 @@ int start_mclient(mclient *this, const char *remote_address, int port,
 	  else
 	    for (i = 0; i < (mclient >> 1); i++) {
 	      if(!dos) usleep(SLEEP_INTERVAL);
-	      if (start_c2c(remote_address, port, ifname, local_address,
+	      if (start_c2c(this, remote_address, port, ifname, local_address,
 			    messagenumber, i << 1) < 0) {
+              //todo: free client_event_base
 	    	  return -1;
 	      }
 	      tot_clients+=2;
@@ -1430,8 +1432,9 @@ int start_mclient(mclient *this, const char *remote_address, int port,
 	  if(!no_rtcp)
 	    for (i = 0; i < (mclient >> 1); i++) {
 	      if(!dos) usleep(SLEEP_INTERVAL);
-	      if (start_client(remote_address, port, ifname, local_address,
+	      if (start_client(this, remote_address, port, ifname, local_address,
 			       messagenumber, i << 1) < 0) {
+              //todo: free client_event_base
 	    	  return -1;
 	      }
 	      tot_clients+=2;
@@ -1439,8 +1442,9 @@ int start_mclient(mclient *this, const char *remote_address, int port,
 	  else 
 	    for (i = 0; i < mclient; i++) {
 	      if(!dos) usleep(SLEEP_INTERVAL);
-	      if (start_client(remote_address, port, ifname, local_address,
+	      if (start_client(this, remote_address, port, ifname, local_address,
 			       messagenumber, i) < 0) {
+              //todo: free client_event_base
 	    	  return -);
 	      }
 	      tot_clients++;

@@ -163,25 +163,25 @@ int main(int argc, char **argv)
 		}
 			break;
 		case 'a':
-			bps = (band_limit_t)strtoul(optarg,NULL,10);
+			this->bps = (band_limit_t)strtoul(optarg,NULL,10);
 			break;
 		case 'o':
-			STRCPY(origin,optarg);
+			STRCPY(this->origin,optarg);
 			break;
 		case 'B':
-			random_disconnect = 1;
+			this->random_disconnect = 1;
 			break;
 		case 'G':
-			extra_requests = 1;
+			this->extra_requests = 1;
 			break;
 		case 'F':
-			STRCPY(cipher_suite,optarg);
+			STRCPY(this->cipher_suite,optarg);
 			break;
 		case 'I':
-			no_permissions = 1;
+			this->no_permissions = 1;
 			break;
 		case 'M':
-			mobility = 1;
+			this->mobility = 1;
 			break;
 		case 'E':
 		{
@@ -194,19 +194,19 @@ int main(int argc, char **argv)
 		}
 			break;
 		case 'O':
-			dos = 1;
+			this->dos = 1;
 			break;
 		case 'C':
-			rest_api_separator=*optarg;
+			this->rest_api_separator=*optarg;
 			break;
 		case 'D':
-			mandatory_channel_padding = 1;
+			this->mandatory_channel_padding = 1;
 			break;
 		case 'N':
-			negative_test = 1;
+			this->negative_test = 1;
 			break;
 		case 'R':
-			negative_protocol_test = 1;
+			this->negative_protocol_test = 1;
 			break;
 		case 'z':
 			RTP_PACKET_INTERVAL = atoi(optarg);
@@ -227,19 +227,19 @@ int main(int argc, char **argv)
 			STRCPY(client_ifname, optarg);
 			break;
 		case 'x':
-			default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_IPV6;
+			this->default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_IPV6;
 			break;
 		case 'X':
-			default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_IPV4;
+			this->default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_IPV4;
 			break;
 		case 'l':
-			clmessage_length = atoi(optarg);
+			this->clmessage_length = atoi(optarg);
 			break;
 		case 's':
-			do_not_use_channel = 1;
+			this->do_not_use_channel = 1;
 			break;
 		case 'n':
-			messagenumber = atoi(optarg);
+			this->messagenumber = atoi(optarg);
 			break;
 		case 'p':
 			port = atoi(optarg);
