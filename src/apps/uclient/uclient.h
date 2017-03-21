@@ -40,7 +40,7 @@
 #include <openssl/bn.h>
 
 #ifdef __cplusplus
-extern "C" {
+    "C" {
 #endif
 
 //////////////////////////////////////////////
@@ -48,55 +48,60 @@ extern "C" {
 #define STOPPING_TIME (10)
 #define STARTING_TCP_RELAY_TIME (30)
 
-extern int clmessage_length;
-extern int do_not_use_channel;
-extern int clnet_verbose;
-extern int use_tcp;
-extern int use_sctp;
-extern int use_secure;
-extern char cert_file[1025];
-extern char pkey_file[1025];
-extern int hang_on;
-extern int c2c;
-extern ioa_addr peer_addr;
-extern int no_rtcp;
-extern int default_address_family;
-extern int dont_fragment;
-extern u08bits g_uname[STUN_MAX_USERNAME_SIZE+1];
-extern password_t g_upwd;
-extern char g_auth_secret[1025];
-extern int g_use_auth_secret_with_timestamp;
-extern int use_fingerprints;
-extern SSL_CTX *root_tls_ctx[32];
-extern int root_tls_ctx_num;
-extern int RTP_PACKET_INTERVAL;
-extern u08bits relay_transport;
-extern unsigned char client_ifname[1025];
-extern struct event_base* client_event_base;
-extern int passive_tcp;
-extern int mandatory_channel_padding;
-extern int negative_test;
-extern int negative_protocol_test;
-extern int dos;
-extern int random_disconnect;
-extern SHATYPE shatype;
-extern int mobility;
-extern int no_permissions;
-extern int extra_requests;
-extern band_limit_t bps;
-extern int dual_allocation;
+typedef struct s_mclient {
 
-extern char origin[STUN_MAX_ORIGIN_SIZE+1];
+    int clmessage_length;
+    int do_not_use_channel;
+    int clnet_verbose;
+    int use_tcp;
+    int use_sctp;
+    int use_secure;
+    char cert_file[1025];
+    char pkey_file[1025];
+    int hang_on;
+    int c2c;
+    ioa_addr peer_addr;
+    int no_rtcp;
+    int default_address_family;
+    int dont_fragment;
+    u08bits g_uname[STUN_MAX_USERNAME_SIZE+1];
+    password_t g_upwd;
+    char g_auth_secret[1025];
+    int g_use_auth_secret_with_timestamp;
+    int use_fingerprints;
+    SSL_CTX *root_tls_ctx[32];
+    int root_tls_ctx_num;
+    int RTP_PACKET_INTERVAL;
+    u08bits relay_transport;
+    unsigned char client_ifname[1025];
+    struct event_base* client_event_base;
+    int passive_tcp;
+    int mandatory_channel_padding;
+    int negative_test;
+    int negative_protocol_test;
+    int dos;
+    int random_disconnect;
+    SHATYPE shatype;
+    int mobility;
+    int no_permissions;
+    int extra_requests;
+    band_limit_t bps;
+    int dual_allocation;
 
-extern int oauth;
-extern oauth_key okey_array[3];
+    char origin[STUN_MAX_ORIGIN_SIZE+1];
+
+    int oauth;
+    oauth_key okey_array[3];
+
+}   mclient;
 
 #define UCLIENT_SESSION_LIFETIME (777)
 #define OAUTH_SESSION_LIFETIME (555)
 
 #define is_TCP_relay() (relay_transport == STUN_ATTRIBUTE_TRANSPORT_TCP_VALUE)
-
-void start_mclient(const char *remote_address, int port,
+void mclient_init(mclient *this);
+        
+int start_mclient(s_mclient *this, const char *remote_address, int port,
 		   const unsigned char* ifname, const char *local_address,
 		   int messagenumber, int mclient);
 

@@ -93,6 +93,21 @@ static int show_statistics = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void mclient_init(mclient *this)
+{
+    memset(this, sizeof(this), 0);
+    
+    clmessage_length=100;
+    clnet_verbose = TURN_VERBOSE_NONE;
+    default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_DEFAULT;
+    use_fingerprints = 1;
+    
+    relay_transport = STUN_ATTRIBUTE_TRANSPORT_UDP_VALUE;
+    shatype = SHATYPE_DEFAULT;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 static void __turn_getMSTime(void) {
   static u64bits start_sec = 0;
   struct timespec tp={0,0};
@@ -1359,7 +1374,7 @@ static void timer_handler(evutil_socket_t fd, short event, void *arg)
 	}
 }
 
-void start_mclient(const char *remote_address, int port,
+int start_mclient(mclient *this, const char *remote_address, int port,
 		const unsigned char* ifname, const char *local_address,
 		int messagenumber, int mclient) {
 
@@ -1398,7 +1413,7 @@ void start_mclient(const char *remote_address, int port,
 	      if(!dos) usleep(SLEEP_INTERVAL);
 	      if (start_c2c(remote_address, port, ifname, local_address,
 			    messagenumber, i << 2) < 0) {
-	    	  exit(-1);
+	    	  return -1;
 	      }
 	      tot_clients+=4;
 	    }
@@ -1407,7 +1422,7 @@ void start_mclient(const char *remote_address, int port,
 	      if(!dos) usleep(SLEEP_INTERVAL);
 	      if (start_c2c(remote_address, port, ifname, local_address,
 			    messagenumber, i << 1) < 0) {
-	    	  exit(-1);
+	    	  return -1;
 	      }
 	      tot_clients+=2;
 	    }
@@ -1417,7 +1432,7 @@ void start_mclient(const char *remote_address, int port,
 	      if(!dos) usleep(SLEEP_INTERVAL);
 	      if (start_client(remote_address, port, ifname, local_address,
 			       messagenumber, i << 1) < 0) {
-	    	  exit(-1);
+	    	  return -1;
 	      }
 	      tot_clients+=2;
 	    }
@@ -1426,14 +1441,14 @@ void start_mclient(const char *remote_address, int port,
 	      if(!dos) usleep(SLEEP_INTERVAL);
 	      if (start_client(remote_address, port, ifname, local_address,
 			       messagenumber, i) < 0) {
-	    	  exit(-1);
+	    	  return -);
 	      }
 	      tot_clients++;
 	    }
 	}
 
 	if(dos)
-		_exit(0);
+		goto finish;
 
 	total_clients = tot_clients;
 
@@ -1555,7 +1570,7 @@ void start_mclient(const char *remote_address, int port,
 		      __FUNCTION__,
 		      (unsigned long) tot_send_bytes,
 		      (unsigned long) tot_recv_bytes);
-
+finish:
 	if (client_event_base)
 		event_base_free(client_event_base);
 
@@ -1579,6 +1594,7 @@ void start_mclient(const char *remote_address, int port,
 				(unsigned long)max_jitter);
 
 	turn_free(elems,0);
+    return 0;
 }
 
 ///////////////////////////////////////////

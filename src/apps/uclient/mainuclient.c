@@ -50,57 +50,6 @@
 
 /////////////// extern definitions /////////////////////
 
-int clmessage_length=100;
-int do_not_use_channel=0;
-int c2c=0;
-int clnet_verbose=TURN_VERBOSE_NONE;
-int use_tcp=0;
-int use_sctp=0;
-int use_secure=0;
-int hang_on=0;
-ioa_addr peer_addr;
-int no_rtcp = 0;
-int default_address_family = STUN_ATTRIBUTE_REQUESTED_ADDRESS_FAMILY_VALUE_DEFAULT;
-int dont_fragment = 0;
-u08bits g_uname[STUN_MAX_USERNAME_SIZE+1];
-password_t g_upwd;
-char g_auth_secret[1025]="\0";
-int g_use_auth_secret_with_timestamp = 0;
-int use_fingerprints = 1;
-
-static char ca_cert_file[1025]="";
-static char cipher_suite[1025]="";
-char cert_file[1025]="";
-char pkey_file[1025]="";
-SSL_CTX *root_tls_ctx[32];
-int root_tls_ctx_num = 0;
-
-u08bits relay_transport = STUN_ATTRIBUTE_TRANSPORT_UDP_VALUE;
-unsigned char client_ifname[1025] = "";
-int passive_tcp = 0;
-int mandatory_channel_padding = 0;
-int negative_test = 0;
-int negative_protocol_test = 0;
-int dos = 0;
-int random_disconnect = 0;
-
-SHATYPE shatype = SHATYPE_DEFAULT;
-
-int mobility = 0;
-
-int no_permissions = 0;
-
-int extra_requests = 0;
-
-char origin[STUN_MAX_ORIGIN_SIZE+1] = "\0";
-
-band_limit_t bps = 0;
-
-int dual_allocation = 0;
-
-int oauth = 0;
-oauth_key okey_array[3];
-
 static oauth_key_data_raw okdr_array[3] = {
 		{"north","MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEK",0,0,"A256GCM"},
 		{"union","MTIzNDU2Nzg5MDEyMzQ1Ngo=",0,0,"A128GCM"},
