@@ -1225,14 +1225,14 @@ static void print_statistics(void)
             addr_to_string(turn_params.external_ip, (u08bits*)ip);
             snprintf(key, sizeof(key), "/config/turn/running/%s", ip);
             snprintf(url, sizeof(url), "turn:%s:%d", ip, turn_params.listener_port);
-            snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d, \"country_code\":%s }", url, active_users, turn_params.country_code);
+            snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d, \"zone\":%s }", url, active_users, turn_params.zone_code);
             
             int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
             if (code != ETCD_OK) {
                 TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cant write configuration, etcd_set failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n", code);
                 return;
             }
-            // TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"turn etcd data updated\n");
+            // TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"turn etcd data updated, %s %s\n", key, turn_params.zone_code );
 
         }
     }
