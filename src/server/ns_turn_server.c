@@ -76,6 +76,10 @@ static inline void log_method(ts_ur_super_session* ss, const char *method, int e
 				"session %018llu: realm <%s> user <%s>: incoming packet %s processed, success\n",
 				(unsigned long long)(ss->id), (const char*)(ss->realm_options.name),(const char*)(ss->username),method);
 		}
+	  } else if(err_code==401) {
+		  	TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,
+						"session %018llu: realm <%s> user <%s>: incoming packet %s processed, unauthorized\n",
+						(unsigned long long)(ss->id), (const char*)(ss->realm_options.name),(const char*)(ss->username),method);
 	  } else {
 		  if(!reason) reason=(const u08bits*)"Unknown error";
 		  if(ss->origin[0]) {
