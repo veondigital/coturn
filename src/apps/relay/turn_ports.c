@@ -334,6 +334,8 @@ static turnipports* turnipports_singleton = NULL;
 
 turnipports* turnipports_create(super_memory_t *sm, u16bits start, u16bits end)
 {
+	TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnipports_create: start: %d, end: %d\n",
+	    start, end);
 	turnipports *ret = (turnipports*) allocate_super_memory_region(sm, sizeof(turnipports));
 	ret->sm = sm;
 	ur_addr_map_init(&(ret->ip_to_turnports_udp));
