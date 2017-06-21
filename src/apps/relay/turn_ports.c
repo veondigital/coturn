@@ -51,6 +51,7 @@ struct _turnports {
   u16bits range_start;
   u16bits range_stop;
   u16bits ports[PORTS_SIZE];
+  u16bits allocated;
   TURN_MUTEX_DECLARE(mutex)
 };
 typedef struct _turnports turnports;
@@ -67,6 +68,8 @@ static void turnports_release(turnports* tp, u16bits port);
 
 static int turnports_is_allocated(turnports* tp, u16bits port);
 static int turnports_is_available(turnports* tp, u16bits port);
+
+void turnports_dump(turnports* tp);
 
 /////////////// UTILS //////////////////////////////////////
 
@@ -107,13 +110,16 @@ static void turnports_randomize(turnports* tp) {
 }   
 
 static void turnports_init(turnports* tp, u16bits start, u16bits end) {
-
+  tp->allocated=0;
   tp->low=start;
   tp->high=((u32bits)end)+1;
 
   tp->range_start=start;
   tp->range_stop=end;
-  
+
+  TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_init: full_range: 0..%d, range: %d..%d, low %d..high %d\n",
+    PORTS_SIZE, tp->range_start, tp->range_stop, tp->low, tp->high);
+
   int i=0;
   for(i=0;i<start;i++) {
     tp->status[i]=TPS_OUT_OF_RANGE;
@@ -133,7 +139,7 @@ static void turnports_init(turnports* tp, u16bits start, u16bits end) {
   TURN_MUTEX_INIT_RECURSIVE(&(tp->mutex));
 }
 
-/////////////// FUNC ///////////////////////////////////////
+/////////////// FUNC //////////////////////////////////////
 
 turnports* turnports_create(super_memory_t *sm, u16bits start, u16bits end) {
 
@@ -141,6 +147,10 @@ turnports* turnports_create(super_memory_t *sm, u16bits start, u16bits end) {
 
   turnports* ret=(turnports*)allocate_super_memory_region(sm, sizeof(turnports));
   turnports_init(ret,start,end);
+
+  TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_create: size: %d\n",
+    turnports_size(ret));
+  turnports_dump(ret);
 
   return ret;
 }
@@ -155,6 +165,16 @@ u16bits turnports_size(turnports* tp) {
   }
 }
 
+void turnports_dump(turnports* tp) {
+  int i=0;
+  TURN_MUTEX_LOCK(&tp->mutex);
+  for(i=tp->range_start;i<=tp->range_stop;++i) {
+    TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_dump: i: %d, port: %d, status: %d\n",
+      i, tp->ports[i], tp->status[i]);
+  }
+  TURN_MUTEX_UNLOCK(&tp->mutex);
+}
+
 int turnports_allocate(turnports* tp) {
 
   int port=-1;
@@ -167,6 +187,8 @@ int turnports_allocate(turnports* tp) {
       
       if(tp->high <= tp->low) {
     	  TURN_MUTEX_UNLOCK(&tp->mutex);
+	  TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_allocate: failed: high(%d) <= low(%d)\n",
+	    tp->high, tp->low);
     	  return -1;
       }
       
@@ -175,6 +197,8 @@ int turnports_allocate(turnports* tp) {
       port=(int)tp->ports[position];
       if(port<(int)(tp->range_start) || port>((int)(tp->range_stop))) {
     	  TURN_MUTEX_UNLOCK(&tp->mutex);
+	  TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_allocate: failed: port(%d) is out of range: %d..%d\n",
+	    port, tp->range_start, tp->range_stop);
     	  return -1;
       }
       if(is_taken(tp->status[port])) {
@@ -191,6 +215,9 @@ int turnports_allocate(turnports* tp) {
     }
   }
 
+  TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_allocate: port: %d, count: %d\n",
+    port, ++tp->allocated);
+
   TURN_MUTEX_UNLOCK(&tp->mutex);
 
   return port;
@@ -198,6 +225,10 @@ int turnports_allocate(turnports* tp) {
 
 void turnports_release(turnports* tp, u16bits port) {
   TURN_MUTEX_LOCK(&tp->mutex);
+
+  TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_release: port: %d, count: %d\n",
+    port, --tp->allocated);
+
   if(tp && port>=tp->range_start && port<=tp->range_stop) {
     u16bits position=(u16bits)(tp->high & 0x0000FFFF);
     if(is_taken(tp->status[port])) {
