@@ -1064,9 +1064,11 @@ static void set_option(int c, char *value)
 		break;
 	case MIN_PORT_OPT:
 		turn_params.min_port = atoi(value);
+		TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "min_port=%d\n", turn_params.min_port);
 		break;
 	case MAX_PORT_OPT:
 		turn_params.max_port = atoi(value);
+		TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "max_port=%d\n", turn_params.max_port);
 		break;
 	case SECURE_STUN_OPT:
 		turn_params.secure_stun = get_bool_value(value);
