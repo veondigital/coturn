@@ -150,7 +150,7 @@ turnports* turnports_create(super_memory_t *sm, u16bits start, u16bits end) {
 
   TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "turnports_create: size: %d\n",
     turnports_size(ret));
-  turnports_dump(ret);
+  //turnports_dump(ret);
 
   return ret;
 }
