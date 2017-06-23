@@ -1000,7 +1000,7 @@ static void *run_udp_listener_thread(void *arg)
 static void setup_listener(void)
 {
 	super_memory_t* sm = new_super_memory_region();
-
+	TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "calling turnipports_create(%d, %d)\n", turn_params.min_port, turn_params.max_port);
 	turn_params.listener.tp = turnipports_create(sm, turn_params.min_port, turn_params.max_port);
 
 	turn_params.listener.event_base = turn_event_base_new();

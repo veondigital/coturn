@@ -1923,7 +1923,13 @@ int main(int argc, char **argv)
 		print_features(mfn);
 	}
 
+	TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "before read_config:0 min_port=%d max_port=%d\n",
+	    turn_params.min_port, turn_params.max_port);
+
 	read_config_file(argc,argv,0);
+
+	TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "after read_config:0 min_port=%d max_port=%d\n",
+	    turn_params.min_port, turn_params.max_port);
 
 	struct uoptions uo;
 	uo.u.m = long_options;
@@ -1933,7 +1939,13 @@ int main(int argc, char **argv)
 			set_option(c,optarg);
 	}
 
+	TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "before read_config:1 min_port=%d max_port=%d\n",
+	    turn_params.min_port, turn_params.max_port);
+
 	read_config_file(argc,argv,1);
+
+	TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "after read_config:1 min_port=%d max_port=%d\n",
+	    turn_params.min_port, turn_params.max_port);
 
 	if(!get_realm(NULL)->options.name[0]) {
 		STRCPY(get_realm(NULL)->options.name,turn_params.domain);
