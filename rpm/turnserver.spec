@@ -5,22 +5,12 @@ Summary:	Coturn TURN Server
 
 Group:		System Environment/Libraries
 License:	BSD
-URL:		https://github.com/coturn/coturn/ 
+URL:		https://github.com/SteppeChange/coturn.git
 Source0:	http://turnserver.open-sys.org/downloads/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:	gcc, make, redhat-rpm-config, sqlite-devel
-BuildRequires:	openssl-devel, libevent-devel >= 2.0.0, postgresql-devel
-BuildRequires:	hiredis-devel
-Requires:	openssl, sqlite, libevent >= 2.0.0, mysql-libs, postgresql-libs
-Requires:	hiredis, perl-DBI, perl-libwww-perl
-Requires:	telnet
-%if 0%{?el6}
-BuildRequires:	epel-release, mysql-devel
-Requires:	epel-release, mysql-libs
-%else
-BuildRequires:	mariadb-devel
-Requires: 	mariadb-libs
-%endif
+BuildRequires:	gcc, make, redhat-rpm-config
+BuildRequires:	openssl-devel, libevent-devel >= 2.0.0
+Requires:	openssl, libevent >= 2.0.0
 
 
 %description
@@ -124,9 +114,6 @@ cat $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default | \
     sed s/#no-stdout-log/no-stdout-log/g | \
     sed s/#pidfile/pidfile/g > \
     $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf
-mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
-install -m755 rpm/turnserver.service.fc \
-		$RPM_BUILD_ROOT/%{_unitdir}/turnserver.service
 %endif
 rm -rf $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
 
@@ -139,27 +126,10 @@ rm -rf "$RPM_BUILD_ROOT"
 		%{_datadir}/%{name} turnserver 2> /dev/null || :
 
 %post
-%if 0%{?el6}
-/sbin/chkconfig --add turnserver
-%else
-/bin/systemctl --system daemon-reload
-%endif
 
 %preun
-if [ $1 = 0 ]; then
-%if 0%{?el6}
-	/sbin/service turnserver stop > /dev/null 2>&1
-	/sbin/chkconfig --del turnserver
-%else
-	/bin/systemctl stop turnserver.service
-	/bin/systemctl disable turnserver.service 2> /dev/null
-%endif
-fi
 
 %postun
-%if 0%{?fedora}
-/bin/systemctl --system daemon-reload
-%endif
 
 %files
 %defattr(-,root,root)
@@ -172,11 +142,6 @@ fi
 %dir %attr(-,turnserver,turnserver) %{_sysconfdir}/%{name}
 %config(noreplace) %attr(0644,turnserver,turnserver) %{_sysconfdir}/%{name}/turnserver.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/turnserver
-%if 0%{?el6}
-%config %{_sysconfdir}/rc.d/init.d/turnserver
-%else
-%config %{_unitdir}/turnserver.service
-%endif
 %dir %{_docdir}/%{name}
 %{_docdir}/%{name}/LICENSE
 %{_docdir}/%{name}/INSTALL

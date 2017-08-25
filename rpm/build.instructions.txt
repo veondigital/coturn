@@ -45,3 +45,10 @@ $ ./Fedora.pre.build.sh
 $ ./build.sh
 (then see the tarball in ~/rpmbuild/RPMS/<arch>)
 
+AUTOMATED PROCESS FOR AMI Linux:
+
+$ cd <...>/coturn/rpm
+$ ./AMI2017.pre.build.sh
+$ ./build.sh
+(then see the tarball in ~/rpmbuild/RPMS/<arch>)
+

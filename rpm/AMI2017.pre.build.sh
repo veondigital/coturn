@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CentOS7 preparation script.
+# Amazon Linux preparation script.
 
 CPWD=`pwd`
 
@@ -21,6 +21,6 @@ fi
 
 # Platform file
 
-echo "CentOS7.1" > ${BUILDDIR}/platform
+echo "amzn1" > ${BUILDDIR}/platform
 
 cd ${CPWD}
