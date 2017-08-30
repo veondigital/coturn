@@ -86,6 +86,8 @@ char cli_password[CLI_PASSWORD_LENGTH] = "";
 
 int cli_max_output_sessions = DEFAULT_CLI_MAX_OUTPUT_SESSIONS;
 
+const int PULL_SERVER_INFO_INTERVAL = 60; // seconds
+
 ///////////////////////////////
 
 struct cli_session {
@@ -184,7 +186,12 @@ struct toggleable_command tcmds[] = {
 				{NULL,NULL}
 };
 
-///////////////////////////////
+///////////// ETCD ///////////////
+
+static void pull_server_info_hadler(ioa_engine_handle e, void *arg);
+
+///////////////////
+
 
 static void myprintf(struct cli_session *cs, const char *format, ...)
 {
@@ -1268,6 +1275,33 @@ void setup_admin_thread(void)
 	}
 
 	adminserver.sessions = ur_map_create();
+
+	///////////// ETCD writing section ////////////////
+
+
+	adminserver.pull_server_info_timer = set_ioa_timer(adminserver.e, PULL_SERVER_INFO_INTERVAL, 0,
+													   pull_server_info_hadler, "etcd_timer", 1,
+													   "pull_server_info_hadler");
+
+
+
+	TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"ETCD connection setup ..... %s\n", turn_params.etcd_db);
+	unsigned char* etcd_server = turn_params.etcd_db;
+
+	adminserver.etcd_sess = etcd_open_str(strdup((const char*)etcd_server));
+
+	if (!adminserver.etcd_sess) {
+		TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cannot open etcd connection url: %s\n", etcd_server);
+		return;
+	}
+	else
+	{
+		TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"etcd connection opened, url: %s\n", etcd_server);
+	}
+
+	// we dont need to close it?  IOA_EVENT_DEL(adminserver.pull_server_info_timer);
+	// we dont need to close it?  etcd_close_str(adminserver.etcd_sess);
+
 }
 
 void admin_server_receive_message(struct bufferevent *bev, void *ptr)
@@ -3666,4 +3700,79 @@ void send_https_socket(ioa_socket_handle s) {
 	}
 }
 
-///////////////////////////////
+//////////////  ETCD   /////////////////
+
+static void print_statistics(void)
+{
+	struct cli_session fake_cs;
+	memset(&fake_cs, 0, sizeof(fake_cs));
+	struct ps_arg arg = { &fake_cs, 0, 0, "", "", 0, NULL, NULL, NULL, 0};
+
+	arg.ct = turn_time();
+	arg.users = ur_string_map_create(NULL);
+
+	ur_map_foreach_arg(adminserver.sessions, (foreachcb_arg_type)print_session, &arg);
+
+	char guid[256];
+	addr_to_string(turn_params.external_ip, (u08bits*)guid);
+	int active_users = 0;
+
+	if(arg.user_counters)
+		active_users = *(arg.user_counters);
+
+	// if(arg.user_counters)
+	{
+		if (adminserver.etcd_sess) {
+			// https://coreos.com/etcd/docs/0.4.7/etcd-api/
+			// https://coreos.com/etcd/docs/2.2.2/errorcode.html
+			// https://steppechange.atlassian.net/wiki/x/DwAd
+			// ./etcd-test  -s 127.0.0.1:2379 get turn_server
+			// curl -L 'http://192.168.1.80:2379/v2/keys/config/turn?recursive=true'
+			unsigned long ttl_num = PULL_SERVER_INFO_INTERVAL*2; // sec
+
+			char ip[256];
+			char key[256];
+			char url[256];
+			char json[1024];
+
+			addr_to_string(turn_params.external_ip, (u08bits*)ip);
+			snprintf(key, sizeof(key), "/config/turn/running/%s", ip);
+			snprintf(url, sizeof(url), "turn:%s:%d", ip, turn_params.listener_port);
+			snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d, \"zone\":\"%s\" }", url, active_users, turn_params.zone_code);
+
+			int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
+			if (code != ETCD_OK) {
+				TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cant write configuration, etcd_set failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n", code);
+				return;
+			}
+			// TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"turn etcd data updated, %s %s\n", key, turn_params.zone_code );
+
+		}
+	}
+
+	if(arg.user_counters)
+		turn_free(arg.user_counters,sizeof(size_t)*arg.users_number);
+	if(arg.user_names) {
+		size_t i;
+		for(i=0;i<arg.users_number;++i) {
+			if(arg.user_names[i])
+				turn_free(arg.user_names[i],strlen(arg.user_names[i])+1);
+		}
+		turn_free(arg.user_names,sizeof(char*) * arg.users_number);
+	}
+	if(arg.users)
+		ur_string_map_free(&arg.users);
+}
+
+static void pull_server_info_hadler(ioa_engine_handle e, void *arg)
+{
+	UNUSED_ARG(e);
+	UNUSED_ARG(arg);
+//    char* test = (char*)arg;
+//    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"%s %s\n", __FUNCTION__, test);
+
+	print_statistics();
+
+}
+
+
