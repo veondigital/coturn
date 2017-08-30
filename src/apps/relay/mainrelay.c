@@ -71,6 +71,8 @@ char HTTP_ALPN[128] = "http/1.1";
 #define DEFAULT_GENERAL_RELAY_SERVERS_NUMBER (1)
 
 turn_params_t turn_params = {
+"", // secret_key
+"", // secret_iv
 NULL, NULL,
 #if TLSv1_1_SUPPORTED
 	NULL,
@@ -371,6 +373,7 @@ int get_a_local_relay(int family, ioa_addr *relay_addr)
 
 static char Usage[] = "Usage: turnserver [options]\n"
 "Options:\n"
+" --secret-key <key-string> \n"
 " -d, --listening-device	<device-name>		Listener interface device (NOT RECOMMENDED. Optional, Linux only).\n"
 " -p, --listening-port		<port>		TURN listener port (Default: 3478).\n"
 "						Note: actually, TLS & DTLS sessions can connect to the \"plain\" TCP & UDP port(s), too,\n"
@@ -761,6 +764,7 @@ struct uoptions {
 };
 
 static const struct myoption long_options[] = {
+				{ "secret-key", required_argument, NULL, '0' },
 				{ "listening-device", required_argument, NULL, 'd' },
 				{ "listening-port", required_argument, NULL, 'p' },
 				{ "tls-listening-port", required_argument, NULL, TLS_PORT_OPT },
@@ -909,6 +913,34 @@ static const struct myoption admin_long_options[] = {
 				{ NULL, no_argument, NULL, 0 }
 };
 
+
+int passphrase2key(unsigned char const* pass, unsigned char* key, unsigned char* iv)
+{
+	OpenSSL_add_ssl_algorithms(); // openssl_setup happens later, so we need it here
+
+	const EVP_CIPHER *cipher;
+	const EVP_MD *dgst = NULL;
+
+	const unsigned char *salt = NULL;
+
+	cipher = EVP_get_cipherbyname("aes-128-cbc");
+	if (!cipher)
+	{ TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "no such cipher (aes-128-cbc) \n"); return 0; }
+
+	dgst = EVP_get_digestbyname("md5");
+	if (!dgst)
+	{ TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "no such digets (md5)\n"); return 0; }
+
+
+	if (!EVP_BytesToKey(cipher, dgst, salt,
+						(unsigned char *)(unsigned long)pass,
+						strlen((const char*)pass), 1, key, iv))
+	{ TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "bytes to token failed, cant convert passphrase, check config secret-key\n"); return 0; }
+
+	return 1;
+}
+
+
 static int get_int_value(const char* s, int default_value)
 {
 	if (!s || !(s[0]))
@@ -935,6 +967,10 @@ static void set_option(int c, char *value)
   }
 
   switch (c) {
+  case '0':
+	  STRCPY(turn_params.secret_key, value);
+      passphrase2key((unsigned char const*)value, turn_params.secret_key, turn_params.secret_iv);
+      break;
   case SERVER_NAME_OPT:
 	  STRCPY(turn_params.oauth_server_name,value);
 	  break;

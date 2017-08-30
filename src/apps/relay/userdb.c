@@ -402,6 +402,60 @@ int get_user_key(int in_oauth, int *out_oauth, int *max_session_time, u08bits *u
 {
 	int ret = -1;
 
+	/* Decode certificate */
+	struct certificate cert;
+	memset(&cert, 0, sizeof cert);
+	unsigned char const *secret_key = (unsigned char *)turn_params.secret_key;
+	unsigned char const *iv = (unsigned char *)turn_params.secret_iv;
+
+	stun_attr_ref sar = stun_attr_get_first_by_type_str(ioa_network_buffer_data(nbh), ioa_network_buffer_get_size(nbh), STUN_ATTRIBUTE_SOFTWARE);
+	if (sar)
+	{
+		int token_len = stun_attr_get_len(sar);
+		const u08bits* token_ptr = stun_attr_get_value(sar);
+		u08bits token[128];
+		memcpy(token, token_ptr, token_len);
+		token[token_len]=0;
+		int err = stun_check_message_certificate(token, token_len, &cert, secret_key, iv);
+		if(token_len && err == 0)
+		{
+			const char* password = cert.call_id;
+			size_t sz = get_hmackey_size(SHATYPE_DEFAULT) * 2;
+
+			char skey[sizeof(hmackey_t) * 2 + 1];
+			password2hmac(password, usname, realm, skey);
+
+			if(convert_string_key_to_binary(skey, key, sz / 2) < 0) {
+				TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Wrong key: %s, user %s\n", skey, usname);
+			}
+
+			char buff[20];
+			struct tm * timeinfo;
+			timeinfo = localtime (&cert.deadline);
+			strftime(buff, sizeof(buff), "%Y %b %d %H:%M", timeinfo);
+
+			time_t     now;
+			now = time(NULL);
+
+			if(now - cert.deadline < -60 || // server's time's wrong? more then 60 sec time diff
+			   now - cert.deadline > 60*60*4 ) // too much diff, something wrong
+			{
+				TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Token expired: user: %s token: %s time: %s time_diff: %d sec\n", usname, token, buff, now - cert.deadline);
+				return -1;
+			}
+
+			TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO, "Token decrypted: user:%s seq:%s time:%s call:%s \n", usname, cert.seq, buff, cert.call_id);
+			return 0;
+		}
+		else
+		{
+			TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR, "Incorrect token: user %s token: %s Error: %d\n", usname, token, err);
+			return -1;
+		}
+	}
+	else
+		TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "Tokent not found: user %s\n", usname);
+
 	if(max_session_time)
 		*max_session_time = 0;
 
@@ -1306,6 +1360,31 @@ void reread_realms(void)
 	if (dbd && dbd->reread_realms) {
 		(*dbd->reread_realms)(&realms_list);
 	}
+}
+
+
+/////////////// CERTIFICATE ////////////////
+
+static void binary_2_string_key(hmackey_t key, char* skey, size_t sz)
+{
+	int maxsz = (int) (sz * 2) + 1;
+	char *s = skey;
+	size_t i = 0;
+	for (i = 0; (i < sz) && (maxsz > 2); i++) {
+		snprintf(s, (size_t) (sz * 2), "%02x", (unsigned int) key[i]);
+		maxsz -= 2;
+		s += 2;
+	}
+	skey[sz * 2] = 0;
+}
+
+void password2hmac(const char* pwd, u08bits *user, u08bits *realm, char *skey)
+{
+	hmackey_t key;
+	char* pwd2 = (char*) (unsigned long) pwd; // TODO we dont need this fun in a future
+	stun_produce_integrity_key_str(user, realm, (u08bits*)pwd2, key, SHATYPE_DEFAULT);
+	size_t sz = get_hmackey_size(SHATYPE_DEFAULT);
+	binary_2_string_key(key, skey, sz);
 }
 
 ///////////////////////////////

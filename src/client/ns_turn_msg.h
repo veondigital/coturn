@@ -221,6 +221,27 @@ int check_password(const char* pin, const char* pwd);
 
 ///////////////////////////////////////////////////////////////
 
+struct certificate
+{
+	char seq[128];
+	char call_id[32];
+	time_t deadline; // unix epoch time
+};
+
+/*
+ * Return -1 if failure, 0 if the integrity is not correct, 1 if OK
+ */
+size_t calcDecodeLength(const unsigned char* b64input);
+int Base64Decode(const u08bits* b64message, unsigned char * output, int* output_length);
+int parse_token(const char* server_token, struct certificate* cert);
+int decrypt_aes_128(unsigned char *ciphertext, int ciphertext_len, const unsigned char *key,
+					const unsigned char *iv, unsigned char *plaintext);
+int stun_check_message_certificate(const u08bits *buf, size_t len, struct certificate* cert, unsigned char const *key, unsigned char const *iv);
+
+
+///////////////////////////////////////////////////////////////
+
+
 #ifdef __cplusplus
 }
 #endif

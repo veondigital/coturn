@@ -2657,3 +2657,159 @@ int decode_oauth_token(const u08bits *server_name, const encoded_oauth_token *et
 }
 
 ///////////////////////////////////////////////////////////////
+//                              CERTIFICATE
+
+int parse_token(const char* server_token, struct certificate* cert)
+{
+	memset(cert, 0, sizeof(struct certificate));
+	int size = strlen(server_token);
+	if(server_token[0]!='{')
+		return 0;
+
+	if(server_token[size-1]!='}')
+		return 0;
+
+	char* token = 0;
+
+	token = strtok((char*)(unsigned long)server_token, "{}|");
+	if(!token) return 0;
+	strcpy(cert->seq,  token);
+
+	token = strtok(NULL, "{}|");
+	if(!token) return 0;
+	strcpy(cert->call_id,  token);
+
+	token = strtok(NULL, "{}|");
+	if(!token) return 0;
+	cert->deadline = atoi(token);
+	if(cert->deadline==0) return 0;
+
+	return 1;
+}
+
+size_t calcDecodeLength(const unsigned char* b64input) { //Calculates the length of a decoded string
+	size_t len = strlen((const char *)b64input),
+			padding = 0;
+
+	if (b64input[len - 1] == '=' && b64input[len - 2] == '=') //last two chars are =
+		padding = 2;
+	else if (b64input[len - 1] == '=') //last char is =
+		padding = 1;
+
+	return (len * 3) / 4 - padding;
+}
+
+int Base64Decode(const u08bits* b64message, unsigned char * output, int* output_length) { //Decodes a base64 encoded string
+
+	// to do check b64message can be null
+	BIO *bio, *b64;
+	unsigned char* buffer;
+	int length;
+	*output_length = 0;
+
+	int decodeLen = calcDecodeLength(b64message);
+	buffer = (unsigned char*)malloc(decodeLen + 1);
+	buffer[decodeLen] = '\0';
+
+	bio = BIO_new_mem_buf((void *)(unsigned long)b64message, -1);
+	b64 = BIO_new(BIO_f_base64());
+	bio = BIO_push(b64, bio);
+
+	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
+	// char* test = (char*)(unsigned long)b64message;
+	length = BIO_read(bio, buffer, strlen((char*)(unsigned long)b64message));
+	if(length != decodeLen) //length should equal decodeLen, else something went horribly wrong
+		return 0;
+	BIO_free_all(bio);
+
+	memcpy(output, buffer, length);
+	*output_length = length;
+	free(buffer);
+
+	return 1; //success
+}
+
+int decrypt_aes_128(unsigned char *ciphertext, int ciphertext_len, const unsigned char *key,
+					const unsigned char *iv, unsigned char *plaintext)
+{
+	EVP_CIPHER_CTX *ctx;
+
+	int len = 0;
+
+	int plaintext_len;
+
+	/* Create and initialise the context */
+	if (!(ctx = EVP_CIPHER_CTX_new()))
+		return 0;
+
+	/* Initialise the decryption operation. IMPORTANT - ensure you use a key
+     * and IV size appropriate for your cipher
+     * In this example we are using 256 bit AES (i.e. a 256 bit key). The
+     * IV size for *most* modes is the same as the block size. For AES this
+     * is 128 bits */
+	// Cipher Block Chaining Mode (CBC)
+	if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return 0;
+	}
+
+	/* Provide the message to be decrypted, and obtain the plaintext output.
+     * EVP_DecryptUpdate can be called multiple times if necessary
+     */
+	if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return 0;
+	}
+	plaintext_len = len;
+
+	/* Finalise the decryption. Further plaintext bytes may be written at
+     * this stage.
+     */
+	if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return 0;
+	}    plaintext_len += len;
+
+	/* Clean up */
+	EVP_CIPHER_CTX_free(ctx);
+
+	return plaintext_len;
+}
+
+/*
+ * Return -1 if failure, 0 if the integrity is not correct, 1 if OK
+ */
+int stun_check_message_certificate(const u08bits *cert_encrypted, size_t cert_encrypted_len, struct certificate* cert, unsigned char const *key, unsigned char const *iv)
+{
+	UNUSED_ARG(cert_encrypted_len);
+
+	unsigned char decryptedtext[128];
+	unsigned char aes_128_token[128];
+	int decryptedtext_len = 0;
+	int aes_128_token_len = 0;
+
+	// to do check cert_encrypted can be null
+
+	if(!Base64Decode(cert_encrypted, aes_128_token, &aes_128_token_len))
+		return -1;
+
+	/* Decrypt the ciphertext */
+	//unsigned char *key1 = (unsigned char *)"11234567890123456789012345678901";
+	decryptedtext_len = decrypt_aes_128((u08bits *)aes_128_token, aes_128_token_len, key, iv,
+										decryptedtext);
+	if(decryptedtext_len==0)
+		return -2;
+
+	/* Add a NULL terminator. We are expecting printable text */
+	decryptedtext[decryptedtext_len] = 0;
+
+	if(!parse_token((const char *)decryptedtext, cert))
+		return -3;
+
+	return 0;
+}
+
+/////////////
