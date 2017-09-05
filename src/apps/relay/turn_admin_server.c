@@ -3738,7 +3738,7 @@ static void print_statistics(void)
 			addr_to_string(turn_params.external_ip, (u08bits*)ip);
 			snprintf(key, sizeof(key), "/config/turn/running/%s", ip);
 			snprintf(url, sizeof(url), "turn:%s:%d", ip, turn_params.listener_port);
-			snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d, \"zone\":\"%s\" }", url, active_users, "UNIMPLEMENTED");
+			snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d, \"zone\":\"%s\" }", url, active_users, turn_params.zone_code);
 
 			int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
 			if (code != ETCD_OK) {

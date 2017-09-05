@@ -74,6 +74,7 @@ turn_params_t turn_params = {
 "", // etcd_db
 "", // secret_key
 "", // secret_iv
+"", // zone_code
 NULL, NULL,
 #if TLSv1_1_SUPPORTED
 	NULL,
@@ -376,6 +377,7 @@ static char Usage[] = "Usage: turnserver [options]\n"
 "Options:\n"
 " --etcd <key-string>	\n"
 " --secret-key <key-string> \n"
+" --zone-code <key-string> \n"
 " -d, --listening-device	<device-name>		Listener interface device (NOT RECOMMENDED. Optional, Linux only).\n"
 " -p, --listening-port		<port>		TURN listener port (Default: 3478).\n"
 "						Note: actually, TLS & DTLS sessions can connect to the \"plain\" TCP & UDP port(s), too,\n"
@@ -768,6 +770,7 @@ struct uoptions {
 static const struct myoption long_options[] = {
                 { "etcd-db", required_argument, NULL, '1' },
 				{ "secret-key", required_argument, NULL, '0' },
+				{ "zone-code", required_argument, NULL, '2' },
 				{ "listening-device", required_argument, NULL, 'd' },
 				{ "listening-port", required_argument, NULL, 'p' },
 				{ "tls-listening-port", required_argument, NULL, TLS_PORT_OPT },
@@ -970,13 +973,15 @@ static void set_option(int c, char *value)
   }
 
   switch (c) {
-  case '0':
-	  STRCPY(turn_params.secret_key, value);
-      passphrase2key((unsigned char const*)value, turn_params.secret_key, turn_params.secret_iv);
-      break;
-  case '1': // etcd-db
-      STRCPY(turn_params.etcd_db,value);
-      break;
+	  case '0': // secret-key
+		passphrase2key( (unsigned char const*)value, turn_params.secret_key, turn_params.secret_iv);
+		break;
+	  case '1': // etcd-db
+		STRCPY(turn_params.etcd_db,value);
+		break;
+	  case '2': // zone-code
+		STRCPY(turn_params.zone_code,value);
+		break;
   case SERVER_NAME_OPT:
 	  STRCPY(turn_params.oauth_server_name,value);
 	  break;
