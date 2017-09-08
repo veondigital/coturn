@@ -1,3 +1,6 @@
 [submodule "etcd-api"]
 	path = etcd-api
 	url = https://github.com/SteppeChange/etcd-api.git
+[submodule "yajl"]
+	path = yajl
+	url = https://github.com/SCDependencies/yajl.git
