@@ -14,7 +14,7 @@ Requires:	openssl, sqlite, libevent >= 2.0.0, postgresql-libs
 Requires:	perl-DBI, perl-libwww-perl
 Requires:	telnet
 %if 0%{?amzn1}
-BuildRequires:	libcurl, mysql-devel
+BuildRequires:	cmake, libcurl, mysql-devel
 Requires:	curl, mysql-libs
 %else
 BuildRequires:	mariadb-devel

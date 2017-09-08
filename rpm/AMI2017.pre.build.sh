@@ -10,7 +10,7 @@ cd ${CPWD}
 
 # Common packs
 
-PACKS="curl curl-devel libevent-devel mysql-devel sqlite sqlite-devel"
+PACKS="cmake curl curl-devel libevent-devel mysql-devel sqlite sqlite-devel"
 sudo yum -y install ${PACKS}
 ER=$?
 if ! [ ${ER} -eq 0 ] ; then
