@@ -10,7 +10,7 @@ cd ${CPWD}
 
 # Common packs
 
-PACKS="libevent-devel sqlite sqlite-devel"
+PACKS="libevent-devel mysql-devel sqlite sqlite-devel"
 sudo yum -y install ${PACKS}
 ER=$?
 if ! [ ${ER} -eq 0 ] ; then
