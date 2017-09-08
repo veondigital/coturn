@@ -13,7 +13,7 @@ BuildRequires:	openssl-devel, libevent-devel >= 2.0.0, postgresql-devel
 Requires:	openssl, sqlite, libevent >= 2.0.0, mysql-libs, postgresql-libs
 Requires:	perl-DBI, perl-libwww-perl
 Requires:	telnet
-%if 0%{?el6}
+%if 0%{?amzn1}
 BuildRequires:	epel-release, mysql-devel
 Requires:	epel-release, mysql-libs
 %else
