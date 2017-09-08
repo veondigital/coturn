@@ -1,18 +1,17 @@
 Name:		turnserver
-Version:	4.5.0.6
+Version:	1.0
 Release:	0%{dist}
 Summary:	Coturn TURN Server
 
 Group:		System Environment/Libraries
 License:	BSD
-URL:		https://github.com/coturn/coturn/ 
+URL:		https://github.com/SteppeChange/coturn
 Source0:	http://turnserver.open-sys.org/downloads/v%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:	gcc, make, redhat-rpm-config, sqlite-devel
 BuildRequires:	openssl-devel, libevent-devel >= 2.0.0, postgresql-devel
-BuildRequires:	hiredis-devel
 Requires:	openssl, sqlite, libevent >= 2.0.0, mysql-libs, postgresql-libs
-Requires:	hiredis, perl-DBI, perl-libwww-perl
+Requires:	perl-DBI, perl-libwww-perl
 Requires:	telnet
 %if 0%{?el6}
 BuildRequires:	epel-release, mysql-devel
