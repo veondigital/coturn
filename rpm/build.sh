@@ -16,6 +16,18 @@ if ! [ ${ER} -eq 0 ] ; then
     exit -1
 fi
 
+# Yajl
+
+cd ${BUILDDIR}/SRPMS
+wget http://vault.centos.org/centos/7/os/Source/SPackages/yajl-2.0.4-4.el7.src.rpm
+rpm -i yajl-2.0.4-4.el7.src.rpm
+rpmbuild -ba ${BUILDDIR}/SPECS/yajl.spec
+ER=$?
+if ! [ ${ER} -eq 0 ] ; then
+    cd ${CPWD}
+    exit -1
+fi
+
 # TURN
 
 cd ${BUILDDIR}/tmp
@@ -23,17 +35,18 @@ rm -rf turnserver-${TURNVERSION}
 git clone ${TURNSERVER_GIT_URL} --branch ${TURNVERSION} turnserver-${TURNVERSION}
 ER=$?
 if ! [ ${ER} -eq 0 ] ; then
-	git clone ${TURNSERVER_GIT_URL} turnserver-${TURNVERSION}
-	ER=$?
-	if ! [ ${ER} -eq 0 ] ; then
-    	cd ${CPWD}
-    	exit -1
+    git clone ${TURNSERVER_GIT_URL} turnserver-${TURNVERSION}
+    ER=$?
+    if ! [ ${ER} -eq 0 ] ; then
+	cd ${CPWD}
+	exit -1
     fi
 fi
 
 cd turnserver-${TURNVERSION}
 git submodule init
 git submodule update
+rm -fR .git
 cd ..
 
 tar zcf ${BUILDDIR}/SOURCES/turnserver-${TURNVERSION}.tar.gz turnserver-${TURNVERSION}
