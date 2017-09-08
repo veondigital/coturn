@@ -16,18 +16,6 @@ if ! [ ${ER} -eq 0 ] ; then
     exit -1
 fi
 
-# Yajl
-
-cd ${BUILDDIR}/SRPMS
-wget http://vault.centos.org/centos/7/os/Source/SPackages/yajl-2.0.4-4.el7.src.rpm
-rpm -i yajl-2.0.4-4.el7.src.rpm
-rpmbuild -ba ${BUILDDIR}/SPECS/yajl.spec
-ER=$?
-if ! [ ${ER} -eq 0 ] ; then
-    cd ${CPWD}
-    exit -1
-fi
-
 # TURN
 
 cd ${BUILDDIR}/tmp
