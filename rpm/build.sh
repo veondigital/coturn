@@ -31,6 +31,11 @@ if ! [ ${ER} -eq 0 ] ; then
     fi
 fi
 
+cd turnserver-${TURNVERSION}
+git submodule init
+git submodule update
+cd ..
+
 tar zcf ${BUILDDIR}/SOURCES/turnserver-${TURNVERSION}.tar.gz turnserver-${TURNVERSION}
 ER=$?
 if ! [ ${ER} -eq 0 ] ; then
