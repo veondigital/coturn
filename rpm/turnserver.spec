@@ -1,5 +1,5 @@
 Name:		turnserver
-Version:	1.0
+Version:	1.1
 Release:	0%{dist}
 Summary:	Coturn TURN Server
 
