@@ -34,10 +34,6 @@ fi
 cd turnserver-${TURNVERSION}
 git submodule init
 git submodule update
-cd yajl
-./configure
-make && make install
-cd ..
 rm -fR .git
 cd ..
 

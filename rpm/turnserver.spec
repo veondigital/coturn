@@ -105,6 +105,11 @@ This package contains the TURN client development headers.
 PREFIX=%{_prefix} CONFDIR=%{_sysconfdir}/%{name} EXAMPLESDIR=%{_datadir}/%{name} \
 	MANPREFIX=%{_datadir} LIBDIR=%{_libdir} ./configure
 make
+cd yajl
+./configure
+make
+DESTDIR=$RPM_BUILD_ROOT make install
+cd ..
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -112,10 +117,8 @@ DESTDIR=$RPM_BUILD_ROOT make install
 %if 0%{?amzn1}
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
 mkdir -p $RPM_BUILD_ROOT/usr/local/lib
-install -m644 yajl/build/yajl-2.1.0/lib/libyajl.so.2.1.0 \
-    $RPM_BUILD_ROOT/usr/local/lib
-ln -sf $RPM_BUILD_ROOT/usr/local/lib/libyajl.so.2.1.0 $RPM_BUILD_ROOT/usr/local/lib/libyajl.so.2
-ln -sf $RPM_BUILD_ROOT/usr/local/lib/libyajl.so.2 $RPM_BUILD_ROOT/usr/local/lib/libyajl.so
+#install -m644 yajl/build/yajl-2.1.0/lib/libyajl.so.2.1.0 \
+#    $RPM_BUILD_ROOT/usr/local/lib
 %else
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 rpm/turnserver.sysconfig \
@@ -278,8 +281,6 @@ fi
 %{_datadir}/%{name}/scripts/mobile/mobile_udp_client.sh
 %if 0%{?amzn1}
 %dir /usr/local/lib
-/usr/local/lib/libyajl.so
-/usr/local/lib/libyajl.so.2
 /usr/local/lib/libyajl.so.2.1.0
 %endif
 
