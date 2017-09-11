@@ -6,7 +6,8 @@ CPWD=`pwd`
 
 # Required packages
 
-PACKS="postgresql-devel hiredis-devel"
+#PACKS="postgresql-devel hiredis-devel"
+PACKS="postgresql-devel"
 
 sudo yum -y install ${PACKS}
 ER=$?
@@ -23,13 +24,19 @@ rm -rf turnserver-${TURNVERSION}
 git clone ${TURNSERVER_GIT_URL} --branch ${TURNVERSION} turnserver-${TURNVERSION}
 ER=$?
 if ! [ ${ER} -eq 0 ] ; then
-	git clone ${TURNSERVER_GIT_URL} turnserver-${TURNVERSION}
-	ER=$?
-	if ! [ ${ER} -eq 0 ] ; then
-    	cd ${CPWD}
-    	exit -1
+    git clone ${TURNSERVER_GIT_URL} turnserver-${TURNVERSION}
+    ER=$?
+    if ! [ ${ER} -eq 0 ] ; then
+	cd ${CPWD}
+	exit -1
     fi
 fi
+
+cd turnserver-${TURNVERSION}
+git submodule init
+git submodule update
+rm -fR .git
+cd ..
 
 tar zcf ${BUILDDIR}/SOURCES/turnserver-${TURNVERSION}.tar.gz turnserver-${TURNVERSION}
 ER=$?

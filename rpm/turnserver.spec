@@ -1,25 +1,32 @@
 Name:		turnserver
-Version:	4.5.0.6
+Version:	1.1
 Release:	0%{dist}
 Summary:	Coturn TURN Server
 
 Group:		System Environment/Libraries
 License:	BSD
-URL:		https://github.com/coturn/coturn/ 
+URL:		https://github.com/SteppeChange/coturn
 Source0:	http://turnserver.open-sys.org/downloads/v%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:	gcc, make, redhat-rpm-config, sqlite-devel
 BuildRequires:	openssl-devel, libevent-devel >= 2.0.0, postgresql-devel
-BuildRequires:	hiredis-devel
-Requires:	openssl, sqlite, libevent >= 2.0.0, mysql-libs, postgresql-libs
-Requires:	hiredis, perl-DBI, perl-libwww-perl
+Requires:	openssl, sqlite, libevent >= 2.0.0, postgresql-libs
+Requires:	perl-DBI, perl-libwww-perl
 Requires:	telnet
+%if 0%{?amzn1}
+%else
+BuildRequires:	hiredis-devel
+Requires:	hiredis
+%endif
 %if 0%{?el6}
 BuildRequires:	epel-release, mysql-devel
 Requires:	epel-release, mysql-libs
-%else
+%elif 0%{?fedora}
 BuildRequires:	mariadb-devel
 Requires: 	mariadb-libs
+%elif 0%{?amzn1}
+BuildRequires:	redhat-rpm-config, cmake, libcurl, mysql-devel
+Requires:	curl, mysql-libs
 %endif
 
 
@@ -107,53 +114,61 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
+%if 0%{?amzn1}
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
+%else
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 rpm/turnserver.sysconfig \
-		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/turnserver
+    $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/turnserver
 sed -i -e "s/#syslog/syslog/g" \
     -e "s/#no-stdout-log/no-stdout-log/g" \
     $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
+%endif
 %if 0%{?el6}
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 rpm/turnserver.init.el \
-		$RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/turnserver
-%else
+    $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/turnserver
+%elif 0%{?fedora}
 sed -i -e "s/#pidfile/pidfile/g" \
     -e "s:/var/run/turnserver.pid:/var/run/turnserver/turnserver.pid:g" \
     $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m755 rpm/turnserver.service.fc \
-		$RPM_BUILD_ROOT/%{_unitdir}/turnserver.service
+    $RPM_BUILD_ROOT/%{_unitdir}/turnserver.service
 %endif
+%if 0%{?amzn1}
+%else
 mv $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf
 %{__install} -Dpm 0644 rpm/turnserver-tmpfiles.conf %{buildroot}%{_tmpfilesdir}/turnserver.conf
+%endif
 mkdir -p %{buildroot}%{_localstatedir}/run/turnserver
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
 
 %pre
+%if 0%{?amzn1}
+%else
 %{_sbindir}/groupadd -r turnserver 2> /dev/null || :
 %{_sbindir}/useradd -r -g turnserver -s /bin/false -c "TURN Server daemon" -d \
 		%{_datadir}/%{name} turnserver 2> /dev/null || :
+%endif
 
 %post
 %if 0%{?el6}
 /sbin/chkconfig --add turnserver
-%else
+%elif 0%{?fedora}
 /bin/systemctl --system daemon-reload
 %endif
 
 %preun
-if [ $1 = 0 ]; then
 %if 0%{?el6}
-	/sbin/service turnserver stop > /dev/null 2>&1
-	/sbin/chkconfig --del turnserver
-%else
-	/bin/systemctl stop turnserver.service
-	/bin/systemctl disable turnserver.service 2> /dev/null
+/sbin/service turnserver stop > /dev/null 2>&1
+/sbin/chkconfig --del turnserver
+%elif 0%{?fedora}
+/bin/systemctl stop turnserver.service
+/bin/systemctl disable turnserver.service 2> /dev/null
 %endif
-fi
 
 %postun
 %if 0%{?fedora}
@@ -168,13 +183,16 @@ fi
 %{_mandir}/man1/coturn.1.gz
 %{_mandir}/man1/turnserver.1.gz
 %{_mandir}/man1/turnadmin.1.gz
+%if 0%{?amzn1}
+%else
 %dir %attr(-,turnserver,turnserver) %{_sysconfdir}/%{name}
 %config(noreplace) %attr(0644,turnserver,turnserver) %{_sysconfdir}/%{name}/turnserver.conf
 %dir %attr(0750,turnserver,turnserver) %{_localstatedir}/run/turnserver
 %config(noreplace) %{_sysconfdir}/sysconfig/turnserver
+%endif
 %if 0%{?el6}
 %config %{_sysconfdir}/rc.d/init.d/turnserver
-%else
+%elif 0%{?fedora}
 %config %{_unitdir}/turnserver.service
 %{_tmpfilesdir}/turnserver.conf
 %endif
