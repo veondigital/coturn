@@ -102,23 +102,15 @@ This package contains the TURN client development headers.
 %setup -q -n %{name}-%{version}
 
 %build
-rm -rf $RPM_BUILD_ROOT
-%if 0%{?amzn1}
-cd yajl
-DESTDIR=$RPM_BUILD_ROOT make install
-cd ..
-%endif
 PREFIX=%{_prefix} CONFDIR=%{_sysconfdir}/%{name} EXAMPLESDIR=%{_datadir}/%{name} \
 	MANPREFIX=%{_datadir} LIBDIR=%{_libdir} ./configure
 make
 
 %install
+rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
 %if 0%{?amzn1}
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
-#mkdir -p $RPM_BUILD_ROOT/usr/local/lib
-#install -m644 yajl/build/yajl-2.1.0/lib/libyajl.so.2.1.0 \
-#    $RPM_BUILD_ROOT/usr/local/lib
 %else
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 rpm/turnserver.sysconfig \
@@ -130,14 +122,14 @@ sed -i -e "s/#syslog/syslog/g" \
 %if 0%{?el6}
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 rpm/turnserver.init.el \
-		$RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/turnserver
+    $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/turnserver
 %elif 0%{?fedora}
 sed -i -e "s/#pidfile/pidfile/g" \
     -e "s:/var/run/turnserver.pid:/var/run/turnserver/turnserver.pid:g" \
     $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 install -m755 rpm/turnserver.service.fc \
-		$RPM_BUILD_ROOT/%{_unitdir}/turnserver.service
+    $RPM_BUILD_ROOT/%{_unitdir}/turnserver.service
 %endif
 %if 0%{?amzn1}
 %else
@@ -279,10 +271,6 @@ fi
 %{_datadir}/%{name}/scripts/mobile/mobile_tcp_client.sh
 %{_datadir}/%{name}/scripts/mobile/mobile_tls_client_c2c_tcp_relay.sh
 %{_datadir}/%{name}/scripts/mobile/mobile_udp_client.sh
-%if 0%{?amzn1}
-%dir /usr/local/lib
-/usr/local/lib/libyajl.so.2.1.0
-%endif
 
 %files 		utils
 %defattr(-,root,root)
