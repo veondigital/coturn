@@ -111,10 +111,12 @@ rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
 %if 0%{?amzn1}
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
+install -m644 yajl/build/yajl-2.1.0/lib/libyajl.so.2.1.0
+    $RPM_BUILD_ROOT/usr/local/lib
 %else
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 rpm/turnserver.sysconfig \
-		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/turnserver
+    $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/turnserver
 sed -i -e "s/#syslog/syslog/g" \
     -e "s/#no-stdout-log/no-stdout-log/g" \
     $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
@@ -271,6 +273,10 @@ fi
 %{_datadir}/%{name}/scripts/mobile/mobile_tcp_client.sh
 %{_datadir}/%{name}/scripts/mobile/mobile_tls_client_c2c_tcp_relay.sh
 %{_datadir}/%{name}/scripts/mobile/mobile_udp_client.sh
+%if 0%{?amzn1}
+%dir %{_datadir}/%{name}/usr/local/lib
+%{_datadir}/%{name}/usr/local/lib/libyajl.so.2.1.0
+%endif
 
 %files 		utils
 %defattr(-,root,root)
