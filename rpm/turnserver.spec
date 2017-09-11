@@ -275,8 +275,8 @@ fi
 %{_datadir}/%{name}/scripts/mobile/mobile_tls_client_c2c_tcp_relay.sh
 %{_datadir}/%{name}/scripts/mobile/mobile_udp_client.sh
 %if 0%{?amzn1}
-%dir %{_datadir}/%{name}/usr/local/lib
-%{_datadir}/%{name}/usr/local/lib/libyajl.so.2.1.0
+%dir /usr/local/lib
+/usr/local/lib/libyajl.so.2.1.0
 %endif
 
 %files 		utils
