@@ -109,9 +109,9 @@ make
 %install
 rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
-mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 %if 0%{?amzn1}
 %else
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 rpm/turnserver.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/turnserver
 sed -i -e "s/#syslog/syslog/g" \
