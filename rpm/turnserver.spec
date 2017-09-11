@@ -106,6 +106,7 @@ rm -rf $RPM_BUILD_ROOT
 %if 0%{?amzn1}
 cd yajl
 DESTDIR=$RPM_BUILD_ROOT make install
+cd ..
 %endif
 PREFIX=%{_prefix} CONFDIR=%{_sysconfdir}/%{name} EXAMPLESDIR=%{_datadir}/%{name} \
 	MANPREFIX=%{_datadir} LIBDIR=%{_libdir} ./configure
