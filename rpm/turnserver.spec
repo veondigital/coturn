@@ -102,21 +102,20 @@ This package contains the TURN client development headers.
 %setup -q -n %{name}-%{version}
 
 %build
+rm -rf $RPM_BUILD_ROOT
+%if 0%{?amzn1}
+cd yajl
+DESTDIR=$RPM_BUILD_ROOT make install
+%endif
 PREFIX=%{_prefix} CONFDIR=%{_sysconfdir}/%{name} EXAMPLESDIR=%{_datadir}/%{name} \
 	MANPREFIX=%{_datadir} LIBDIR=%{_libdir} ./configure
 make
-cd yajl
-./configure
-make
-DESTDIR=$RPM_BUILD_ROOT make install
-cd ..
 
 %install
-rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
 %if 0%{?amzn1}
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
-mkdir -p $RPM_BUILD_ROOT/usr/local/lib
+#mkdir -p $RPM_BUILD_ROOT/usr/local/lib
 #install -m644 yajl/build/yajl-2.1.0/lib/libyajl.so.2.1.0 \
 #    $RPM_BUILD_ROOT/usr/local/lib
 %else
