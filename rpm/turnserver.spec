@@ -110,6 +110,7 @@ make
 rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
 %if 0%{?amzn1}
+rm $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
 %else
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 rpm/turnserver.sysconfig \
