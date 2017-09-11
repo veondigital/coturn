@@ -111,6 +111,7 @@ rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
 %if 0%{?amzn1}
 rm $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
+mkdir -p $RPM_BUILD_ROOT/usr/local/lib
 install -m644 yajl/build/yajl-2.1.0/lib/libyajl.so.2.1.0 \
     $RPM_BUILD_ROOT/usr/local/lib
 %else
