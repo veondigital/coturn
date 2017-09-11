@@ -16,7 +16,7 @@ Requires:	telnet
 %if 0%{?el6}
 BuildRequires:	epel-release, mysql-devel
 Requires:	epel-release, mysql-libs
-%elif 0%{?el7}
+%elif 0%{?fedora}
 BuildRequires:	mariadb-devel
 Requires: 	mariadb-libs
 %elif 0%{?amzn1}
@@ -110,16 +110,19 @@ make
 rm -rf $RPM_BUILD_ROOT
 DESTDIR=$RPM_BUILD_ROOT make install
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
+%if 0%{?amzn1}
+%else
 install -m644 rpm/turnserver.sysconfig \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/turnserver
 sed -i -e "s/#syslog/syslog/g" \
     -e "s/#no-stdout-log/no-stdout-log/g" \
     $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
+%endif
 %if 0%{?el6}
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 rpm/turnserver.init.el \
 		$RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/turnserver
-%else
+%elif 0%{?fedora}
 sed -i -e "s/#pidfile/pidfile/g" \
     -e "s:/var/run/turnserver.pid:/var/run/turnserver/turnserver.pid:g" \
     $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/turnserver.conf.default
@@ -135,14 +138,17 @@ mkdir -p %{buildroot}%{_localstatedir}/run/turnserver
 rm -rf "$RPM_BUILD_ROOT"
 
 %pre
+%if 0%{?amzn1}
+%else
 %{_sbindir}/groupadd -r turnserver 2> /dev/null || :
 %{_sbindir}/useradd -r -g turnserver -s /bin/false -c "TURN Server daemon" -d \
 		%{_datadir}/%{name} turnserver 2> /dev/null || :
+%endif
 
 %post
 %if 0%{?el6}
 /sbin/chkconfig --add turnserver
-%else
+%elif 0%{?fedora}
 /bin/systemctl --system daemon-reload
 %endif
 
@@ -151,7 +157,7 @@ if [ $1 = 0 ]; then
 %if 0%{?el6}
 	/sbin/service turnserver stop > /dev/null 2>&1
 	/sbin/chkconfig --del turnserver
-%else
+%elif 0%{?fedora}
 	/bin/systemctl stop turnserver.service
 	/bin/systemctl disable turnserver.service 2> /dev/null
 %endif
@@ -170,13 +176,16 @@ fi
 %{_mandir}/man1/coturn.1.gz
 %{_mandir}/man1/turnserver.1.gz
 %{_mandir}/man1/turnadmin.1.gz
+%if 0%{?amzn1}
+%else
 %dir %attr(-,turnserver,turnserver) %{_sysconfdir}/%{name}
 %config(noreplace) %attr(0644,turnserver,turnserver) %{_sysconfdir}/%{name}/turnserver.conf
 %dir %attr(0750,turnserver,turnserver) %{_localstatedir}/run/turnserver
 %config(noreplace) %{_sysconfdir}/sysconfig/turnserver
+%endif
 %if 0%{?el6}
 %config %{_sysconfdir}/rc.d/init.d/turnserver
-%else
+%elif 0%{?fedora}
 %config %{_unitdir}/turnserver.service
 %{_tmpfilesdir}/turnserver.conf
 %endif
