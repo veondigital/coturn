@@ -86,7 +86,7 @@ char cli_password[CLI_PASSWORD_LENGTH] = "";
 
 int cli_max_output_sessions = DEFAULT_CLI_MAX_OUTPUT_SESSIONS;
 
-const int PULL_SERVER_INFO_INTERVAL = 60; // seconds
+const int PULL_SERVER_INFO_INTERVAL = 30; // seconds
 
 ///////////////////////////////
 
@@ -1230,11 +1230,6 @@ void setup_admin_thread(void)
 		bufferevent_enable(adminserver.https_in_buf, EV_READ);
 	}
 
-    {
-        adminserver.datadog = dd_allocate("testtag");
-        // dd_free(adminserver.datadog);
-    }
-
 	if(use_cli) {
 		if(!cli_addr_set) {
 			if(make_ioa_addr((const u08bits*)CLI_DEFAULT_IP,0,&cli_addr)<0) {
@@ -1306,6 +1301,13 @@ void setup_admin_thread(void)
 
 	// we dont need to close it?  IOA_EVENT_DEL(adminserver.pull_server_info_timer);
 	// we dont need to close it?  etcd_close_str(adminserver.etcd_sess);
+
+
+    /// DATA DOG
+    {
+        adminserver.datadog = dd_allocate("testtag");
+        // dd_free(adminserver.datadog);
+    }
 
 }
 
@@ -3753,6 +3755,9 @@ static void print_statistics(void)
 			// TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"turn etcd data updated, %s %s\n", key, turn_params.zone_code );
 
 		}
+
+        if(adminserver.datadog)
+            dd_gauge(adminserver.datadog, "calls.coturn.active_users", 1 + active_users);
 	}
 
 	if(arg.user_counters)
