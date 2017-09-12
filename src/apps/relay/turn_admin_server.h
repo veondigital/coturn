@@ -72,6 +72,7 @@ struct admin_server {
 	struct bufferevent *out_buf;
 	struct bufferevent *https_in_buf;
 	struct bufferevent *https_out_buf;
+	void*  datadog;
 	ur_map *sessions;
 	pthread_t thr;
 
