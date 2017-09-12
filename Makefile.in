@@ -77,7 +77,7 @@ bin/turnutils_rfc5769check:	${COMMON_DEPS} lib/libturnclient.a src/apps/rfc5769/
 bin/turnserver:	${SERVERAPP_DEPS}
 	${MKBUILDDIR} bin
 	${RMCMD} bin/turnadmin
-	${CC} ${CPPFLAGS} ${CFLAGS} ${DBCFLAGS} ${IMPL_MODS} -Ilib ${SERVERAPP_MODS} ${COMMON_MODS} ${SERVERTURN_MODS} -lcurl -lyajl -o $@ ${DBLIBS} ${LDFLAGS}
+	${CC} ${CPPFLAGS} ${CFLAGS} ${DBCFLAGS} ${IMPL_MODS} -Ilib ${SERVERAPP_MODS} ${COMMON_MODS} ${SERVERTURN_MODS} -ldatadogcpp-shared -lcurl -lyajl -o $@ ${DBLIBS} ${LDFLAGS}
 	cd bin; ln -s turnserver turnadmin  
 
 bin/turnutils_peer:	${COMMON_DEPS} ${LIBCLIENTTURN_MODS} ${LIBCLIENTTURN_DEPS} lib/libturnclient.a src/apps/peer/mainudpserver.c src/apps/peer/udpserver.h src/apps/peer/udpserver.c

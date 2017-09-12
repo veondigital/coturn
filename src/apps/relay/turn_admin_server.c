@@ -68,8 +68,8 @@
 #include "turn_admin_server.h"
 
 #include "http_server.h"
-
 #include "dbdrivers/dbdriver.h"
+#include <datadog-cpp/datadog-c.h>
 
 ///////////////////////////////
 
@@ -1229,6 +1229,11 @@ void setup_admin_thread(void)
 		bufferevent_setcb(adminserver.https_in_buf, https_admin_server_receive_message, NULL, NULL, &adminserver);
 		bufferevent_enable(adminserver.https_in_buf, EV_READ);
 	}
+
+    {
+        adminserver.datadog = dd_allocate("testtag");
+        // dd_free(adminserver.datadog);
+    }
 
 	if(use_cli) {
 		if(!cli_addr_set) {
