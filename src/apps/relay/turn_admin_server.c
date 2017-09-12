@@ -68,8 +68,8 @@
 #include "turn_admin_server.h"
 
 #include "http_server.h"
-
 #include "dbdrivers/dbdriver.h"
+#include <datadog-cpp/datadog-c.h>
 
 ///////////////////////////////
 
@@ -86,7 +86,7 @@ char cli_password[CLI_PASSWORD_LENGTH] = "";
 
 int cli_max_output_sessions = DEFAULT_CLI_MAX_OUTPUT_SESSIONS;
 
-const int PULL_SERVER_INFO_INTERVAL = 60; // seconds
+const int PULL_SERVER_INFO_INTERVAL = 30; // seconds
 
 ///////////////////////////////
 
@@ -1301,6 +1301,16 @@ void setup_admin_thread(void)
 
 	// we dont need to close it?  IOA_EVENT_DEL(adminserver.pull_server_info_timer);
 	// we dont need to close it?  etcd_close_str(adminserver.etcd_sess);
+
+
+  /// DATA DOG
+  {
+		char tag[128] = "zone:";
+		strcat(tag, (char*)turn_params.zone_code);
+		TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"datadog connection ip: %s, port: %d, tag: %s\n", turn_params.datadog_ip, turn_params.datadog_port, tag);
+    adminserver.datadog = dd_allocate(turn_params.datadog_ip, turn_params.datadog_port, tag);
+    //  we dont need to close it?  dd_free(adminserver.datadog);
+  }
 
 }
 
@@ -3748,6 +3758,9 @@ static void print_statistics(void)
 			// TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"turn etcd data updated, %s %s\n", key, turn_params.zone_code );
 
 		}
+
+        if(adminserver.datadog)
+            dd_gauge(adminserver.datadog, "calls.coturn.active_users", active_users);
 	}
 
 	if(arg.user_counters)

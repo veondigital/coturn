@@ -311,6 +311,10 @@ typedef struct _turn_params_ {
 
   unsigned long cpus;
 
+		////  DATADOG
+	char datadog_ip[128];
+	unsigned int datadog_port;
+
 } turn_params_t;
 
 extern turn_params_t turn_params;

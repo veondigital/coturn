@@ -149,7 +149,10 @@ TURN_CREDENTIALS_NONE, /* ct */
 ///////////// Users DB //////////////
 { (TURN_USERDB_TYPE)0, {"\0"}, {0,NULL, {NULL,0}} },
 ///////////// CPUs //////////////////
-DEFAULT_CPUS_NUMBER
+DEFAULT_CPUS_NUMBER,
+//// DATADOG
+"127.0.0.1", // datadog_ip
+8125 // datadog_port
 };
 
 //////////////// OpenSSL Init //////////////////////
@@ -749,7 +752,9 @@ enum EXTRA_OPTS {
 	ADMIN_USER_QUOTA_OPT,
 	SERVER_NAME_OPT,
 	OAUTH_OPT,
-	PROD_OPT
+	PROD_OPT,
+	DD_IP,
+	DD_PORT
 };
 
 struct myoption {
@@ -870,6 +875,8 @@ static const struct myoption long_options[] = {
 				{ "no-tlsv1", optional_argument, NULL, NO_TLSV1_OPT },
 				{ "no-tlsv1_1", optional_argument, NULL, NO_TLSV1_1_OPT },
 				{ "no-tlsv1_2", optional_argument, NULL, NO_TLSV1_2_OPT },
+				{ "datadog-ip", required_argument, NULL, DD_IP },
+				{ "datadog-port", required_argument, NULL, DD_PORT },
 				{ NULL, no_argument, NULL, 0 }
 };
 
@@ -973,19 +980,25 @@ static void set_option(int c, char *value)
   }
 
   switch (c) {
-	  case '0': // secret-key
+	case '0': // secret-key
 		passphrase2key( (unsigned char const*)value, turn_params.secret_key, turn_params.secret_iv);
 		break;
-	  case '1': // etcd-db
-		STRCPY(turn_params.etcd_db,value);
+	case '1': // etcd-db
+		STRCPY(turn_params.etcd_db, value);
 		break;
-	  case '2': // zone-code
-		STRCPY(turn_params.zone_code,value);
+	case '2': // zone-code
+		STRCPY(turn_params.zone_code, value);
 		break;
-  case SERVER_NAME_OPT:
-	  STRCPY(turn_params.oauth_server_name,value);
-	  break;
-  case OAUTH_OPT:
+	case DD_IP: // datadog-ip
+	  	STRCPY(turn_params.datadog_ip, value);
+		break;
+	case DD_PORT: // datadog-port
+			turn_params.datadog_port = atoi(value);
+			break;
+	case SERVER_NAME_OPT:
+	  	STRCPY(turn_params.oauth_server_name,value);
+	  	break;
+	case OAUTH_OPT:
 	  if(!ENC_ALG_NUM) {
 		  TURN_LOG_FUNC(TURN_LOG_LEVEL_WARNING, "WARNING: option --oauth is not supported; ignored.\n");
 	  } else {
