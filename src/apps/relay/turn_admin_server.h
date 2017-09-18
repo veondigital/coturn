@@ -112,6 +112,9 @@ void send_https_socket(ioa_socket_handle s);
 
 ////////////////////////////////////////////
 
+
+void delete_etcd_registration(void);
+
 #ifdef __cplusplus
 }
 #endif

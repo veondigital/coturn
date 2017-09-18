@@ -470,7 +470,11 @@ static int print_session(ur_map_key_type key, ur_map_value_type value, void *arg
 				ur_string_map_put(csarg->users, (ur_string_map_key_type)(char*)tsi->username, value);
 			}
 			csarg->user_counters[(size_t)value] += 1;
-		} else {
+
+      if (adminserver.etcd_sess && turn_params.calls_limit < csarg->user_counters[(size_t)value])
+        delete_etcd_registration();
+
+    } else {
 			if(csarg->username[0]) {
 				if(csarg->exact_match) {
 					if(strcmp((char*)tsi->username, csarg->username))
@@ -1302,7 +1306,6 @@ void setup_admin_thread(void)
 	// we dont need to close it?  IOA_EVENT_DEL(adminserver.pull_server_info_timer);
 	// we dont need to close it?  etcd_close_str(adminserver.etcd_sess);
 
-
   /// DATA DOG
   {
 		char tag[128] = "zone:";
@@ -1312,6 +1315,10 @@ void setup_admin_thread(void)
     //  we dont need to close it?  dd_free(adminserver.datadog);
   }
 
+  /// check calls_limits
+  {
+    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"calls_limit: %d (0 is unlimited) \n", turn_params.calls_limit);
+  }
 }
 
 void admin_server_receive_message(struct bufferevent *bev, void *ptr)
@@ -3725,14 +3732,16 @@ static void print_statistics(void)
 
 	char guid[256];
 	addr_to_string(turn_params.external_ip, (u08bits*)guid);
-	int active_users = 0;
+	unsigned int active_users = 0;
 
 	if(arg.user_counters)
 		active_users = *(arg.user_counters);
 
+  // active_users = 10;
+
 	// if(arg.user_counters)
 	{
-		if (adminserver.etcd_sess) {
+		if (adminserver.etcd_sess && (turn_params.calls_limit==0 || turn_params.calls_limit>active_users) ) {
 			// https://coreos.com/etcd/docs/0.4.7/etcd-api/
 			// https://coreos.com/etcd/docs/2.2.2/errorcode.html
 			// https://steppechange.atlassian.net/wiki/x/DwAd
@@ -3751,16 +3760,21 @@ static void print_statistics(void)
 			snprintf(json, sizeof(json), "{ \"url\":\"%s\", \"active_calls\":%d, \"zone\":\"%s\" }", url, active_users, turn_params.zone_code);
 
 			int code = etcd_set(adminserver.etcd_sess, key, json, 0, ttl_num);
-			if (code != ETCD_OK) {
+
+//      TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"limit/users:%d/%d\n", turn_params.calls_limit, active_users);
+
+      if (code != ETCD_OK) {
 				TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"Cant write configuration, etcd_set failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n", code);
 				return;
 			}
-			// TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"turn etcd data updated, %s %s\n", key, turn_params.zone_code );
-
 		}
+    else {
+        if(turn_params.calls_limit)
+            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,"turn etcd data update disabled, server overload, limit/users:%d/%d\n", turn_params.calls_limit, active_users);
+    }
 
-        if(adminserver.datadog)
-            dd_gauge(adminserver.datadog, "calls.coturn.active_users", active_users);
+    if(adminserver.datadog)
+        dd_gauge(adminserver.datadog, "calls.coturn.active_users", active_users);
 	}
 
 	if(arg.user_counters)
@@ -3785,7 +3799,27 @@ static void pull_server_info_hadler(ioa_engine_handle e, void *arg)
 //    TURN_LOG_FUNC(TURN_LOG_LEVEL_INFO,"%s %s\n", __FUNCTION__, test);
 
 	print_statistics();
-
 }
 
+
+void delete_etcd_registration(void)
+{
+    if (adminserver.etcd_sess) {
+
+        char ip[256];
+        char key[256];
+
+        addr_to_string(turn_params.external_ip, (u08bits *) ip);
+        snprintf(key, sizeof(key), "/config/turn/running/%s", ip);
+
+        int code = etcd_delete(adminserver.etcd_sess, key);
+
+        if (code != ETCD_OK) {
+            TURN_LOG_FUNC(TURN_LOG_LEVEL_ERROR,
+                          "Cant write configuration, etcd_delete failed. Code %d, see https://coreos.com/etcd/docs/2.2.2/errorcode.html \n",
+                          code);
+            return;
+        }
+    }
+}
 

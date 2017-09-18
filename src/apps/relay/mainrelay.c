@@ -152,7 +152,8 @@ TURN_CREDENTIALS_NONE, /* ct */
 DEFAULT_CPUS_NUMBER,
 //// DATADOG
 "127.0.0.1", // datadog_ip
-8125 // datadog_port
+8125, // datadog_port
+0 // calls_limit
 };
 
 //////////////// OpenSSL Init //////////////////////
@@ -754,7 +755,8 @@ enum EXTRA_OPTS {
 	OAUTH_OPT,
 	PROD_OPT,
 	DD_IP,
-	DD_PORT
+	DD_PORT,
+	CALLS_LIMIT
 };
 
 struct myoption {
@@ -877,6 +879,7 @@ static const struct myoption long_options[] = {
 				{ "no-tlsv1_2", optional_argument, NULL, NO_TLSV1_2_OPT },
 				{ "datadog-ip", required_argument, NULL, DD_IP },
 				{ "datadog-port", required_argument, NULL, DD_PORT },
+				{ "calls-limit", optional_argument, NULL, CALLS_LIMIT },
 				{ NULL, no_argument, NULL, 0 }
 };
 
@@ -992,6 +995,9 @@ static void set_option(int c, char *value)
 	case DD_IP: // datadog-ip
 	  	STRCPY(turn_params.datadog_ip, value);
 		break;
+	case CALLS_LIMIT: // calls-limit
+			turn_params.calls_limit = atoi(value);
+			break;
 	case DD_PORT: // datadog-port
 			turn_params.datadog_port = atoi(value);
 			break;

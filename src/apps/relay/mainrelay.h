@@ -315,6 +315,9 @@ typedef struct _turn_params_ {
 	char datadog_ip[128];
 	unsigned int datadog_port;
 
+		/// LIMIT calls
+	unsigned int calls_limit;
+
 } turn_params_t;
 
 extern turn_params_t turn_params;
